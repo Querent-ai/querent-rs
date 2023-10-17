@@ -1,0 +1,20 @@
+[workspace]
+members = [
+    "core",
+    "log-result-proc-macro",
+]
+
+default-members = [
+    "core",
+    "log-result-proc-macro",
+]
+resolver = "2"
+
+[profile.release]
+panic = "unwind"
+
+[profile.production]
+inherits = "release"
+lto = true
+codegen-units = 1
+strip = true
