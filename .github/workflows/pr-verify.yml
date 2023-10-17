@@ -155,3 +155,11 @@ jobs:
           while read line; do
               echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
+
+      - name: Upload Docs
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./target/doc
+      - name: Deploy Docs
+        uses: actions/deploy-pages@v2
+        id: deployment
