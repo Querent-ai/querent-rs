@@ -8,6 +8,7 @@ repository = "https://github.com/querent-ai/querent-rs"
 version = "1.0.0"
 
 [lib]
+crate-type = ["cdylib"]
 name = "querent_rs"
 path = "src/lib.rs"
 doctest = false

@@ -1,4 +1,10 @@
-pub mod interface;
-pub use interface::CallbackInterface;
+// ! Types
 pub mod types;
 pub use types::*;
+
+// ! Callbacks
+//
+pub mod interface;
+pub use interface::EventCallbackInterface;
+
+pub mod reference;
