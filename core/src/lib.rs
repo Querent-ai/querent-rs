@@ -7,4 +7,5 @@
 //! use qurent_rs::Querent;
 pub mod callbacks;
 pub mod querent;
+pub mod tests;
 pub mod util;

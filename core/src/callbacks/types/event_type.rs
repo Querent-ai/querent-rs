@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 
 // Define a Rust enum for EventType
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum EventType {
 	StateTransition,
 	RdfGraphUpdate,
