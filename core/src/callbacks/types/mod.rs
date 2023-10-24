@@ -4,7 +4,5 @@
 /// during the execution of the querent.
 ///
 ///
-pub mod event_state;
-pub use event_state::*;
-pub mod event_type;
-pub use event_type::*;
+pub mod event;
+pub use event::*;
