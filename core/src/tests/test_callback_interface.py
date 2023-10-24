@@ -1,20 +1,14 @@
-import querent_rs.querent_rs.callback_interface as querent_rs
+class SubjectCallback:
+    def handle_event(self, event):
+        print("Python: SubjectCallback.handle_event()")
 
-# Set up a mock callback
-class MockCallback(querent_rs.CallbackInterface):
-    def handle_event(self, event_type, event_data):
-        # Perform Python-side assertions here
-        assert event_type == "state_transition"
-        assert event_data["payload"] == "TestPayload"
+if __name__=="__main__":
+  import trait_exposure
 
-
-# Create an instance of the mock callback
-mock_callback = MockCallback()
-
-# Trigger an event
-event_data = {
-    "event_type": "state_transition",
-    "timestamp": 123.45,
-    "payload": "TestPayload",
-}
-mock_callback.handle_event(event_data)
+  myModel = Model()
+  my_rust_model = trait_exposure.UserModel(myModel)
+  my_rust_model.set_variables([2.0])
+  print("Print value from Python: ", myModel.inputs)
+  my_rust_model.compute()
+  print("Print value from Python through Rust: ", my_rust_model.get_results())
+  print("Print value directly from Python: ", myModel.get_results())

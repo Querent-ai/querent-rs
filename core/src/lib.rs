@@ -6,6 +6,7 @@
 //! # Example
 //! use qurent_rs::Querent;
 pub mod callbacks;
+pub mod config;
 pub mod querent;
 pub mod util;
 

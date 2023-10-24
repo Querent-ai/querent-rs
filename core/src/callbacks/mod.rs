@@ -5,6 +5,4 @@ pub use types::*;
 // ! Callbacks
 //
 pub mod interface;
-pub use interface::EventCallbackInterface;
-
-pub mod reference;
+pub use interface::{EventCallbackInterface, PyEventCallbackInterface};
