@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use crate::config::Config;
 use pyo3::prelude::*;
+use std::{collections::HashMap, sync::Mutex};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Workflow {
 	pub name: String,
 	pub id: String,
@@ -12,63 +11,71 @@ pub struct Workflow {
 
 #[derive(Debug)]
 pub struct WorkflowManager {
-	workflows: HashMap<String, Workflow>,
+	workflows: Mutex<HashMap<String, Workflow>>,
 }
 
 impl WorkflowManager {
 	pub fn new() -> Self {
-		WorkflowManager { workflows: HashMap::new() }
+		WorkflowManager { workflows: Mutex::new(HashMap::new()) }
 	}
 
-	pub fn add_workflow(&mut self, workflow: Workflow) -> bool {
-		if self.check_workflow_exists(&workflow.id) {
-			return false
-		}
-		self.workflows.insert(workflow.id.clone(), workflow);
-		true
-	}
-
-	pub fn remove_workflow(&mut self, id: &str) -> bool {
-		if self.check_workflow_exists(id) {
-			self.workflows.remove(id);
-			return true
-		}
-		false
-	}
-
-	pub fn get_workflow(&self, id: &str) -> Option<&Workflow> {
-		self.workflows.get(id)
-	}
-
-	pub fn get_workflows(&self) -> Vec<&Workflow> {
-		self.workflows.values().collect()
-	}
-
-	pub fn start_workflow(&mut self, id: &str) {
-		if let Some(workflow) = self.workflows.get(id) {
-			Python::with_gil(|py| {
-				let workflow_config = &workflow.config;
-			});
+	pub fn add_workflow(&self, workflow: Workflow) -> Result<(), String> {
+		let mut workflows = self.workflows.lock().map_err(|_| "Mutex lock failed.".to_string())?;
+		if workflows.contains_key(&workflow.id) {
+			Err("Workflow with the same ID already exists.".to_string())
+		} else {
+			workflows.insert(workflow.id.clone(), workflow);
+			Ok(())
 		}
 	}
 
-	pub fn kill_workflow(&mut self, id: &str) {
-		if let Some(workflow) = self.workflows.get(id) {
-			Python::with_gil(|py| {
-				let workflow_config = &workflow.config;
-			});
+	pub fn remove_workflow(&self, id: &str) -> Result<(), String> {
+		let mut workflows = self.workflows.lock().map_err(|_| "Mutex lock failed.".to_string())?;
+		if workflows.remove(id).is_some() {
+			Ok(())
+		} else {
+			Err("Workflow not found.".to_string())
 		}
 	}
 
-	pub fn restart_workflow(&mut self, id: &str) {
-		if let Some(workflow) = self.workflows.get(id) {
-			Python::with_gil(|py| {
-				let workflow_config = &workflow.config;
-			});
-		}
+	pub fn get_workflow(&self, id: &str) -> Option<Workflow> {
+		let workflows = self.workflows.lock().ok()?;
+		workflows.get(id).cloned()
+	}
+
+	pub fn get_workflows(&self) -> Vec<Workflow> {
+		let workflows = self.workflows.lock().ok().unwrap();
+		workflows.values().cloned().collect()
+	}
+
+	pub fn start_workflow(&self, id: &str) -> Result<(), String> {
+		let workflow = self.get_workflow(id).ok_or("Workflow not found.")?;
+		Python::with_gil(|py| {
+			// Implement Python interaction with the workflow here
+			// For example: let workflow_config = &workflow.config;
+			Ok(())
+		})
+	}
+
+	pub fn kill_workflow(&self, id: &str) -> Result<(), String> {
+		let workflow = self.get_workflow(id).ok_or("Workflow not found.")?;
+		Python::with_gil(|py| {
+			// Implement Python interaction with the workflow here
+			// For example: let workflow_config = &workflow.config;
+			Ok(())
+		})
+	}
+
+	pub fn restart_workflow(&self, id: &str) -> Result<(), String> {
+		let workflow = self.get_workflow(id).ok_or("Workflow not found.")?;
+		Python::with_gil(|py| {
+			// Implement Python interaction with the workflow here
+			// For example: let workflow_config = &workflow.config;
+			Ok(())
+		})
 	}
 
 	fn check_workflow_exists(&self, workflow_id: &str) -> bool {
-		self.workflows.contains_key(workflow_id)
+		self.workflows.lock().is_ok() && self.workflows.lock().unwrap().contains_key(workflow_id)
 	}
 }
