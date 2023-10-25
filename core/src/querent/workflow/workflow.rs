@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use crate::config::{config::WorkflowConfig, Config};
-use dryoc::classic::crypto_shorthash::Hash;
-use pyo3::{prelude::*, types::PyDict, PyObject, ToPyObject};
+use crate::config::Config;
+use pyo3::prelude::*;
 
 #[derive(Debug)]
 pub struct Workflow {
@@ -28,30 +27,48 @@ impl WorkflowManager {
 		self.workflows.insert(workflow.id.clone(), workflow);
 		true
 	}
-	fn check_workflow_exists(&self, workflow_id: &str) -> bool {
-		self.workflows.contains_key(workflow_id)
+
+	pub fn remove_workflow(&mut self, id: &str) -> bool {
+		if self.check_workflow_exists(id) {
+			self.workflows.remove(id);
+			return true
+		}
+		false
+	}
+
+	pub fn get_workflow(&self, id: &str) -> Option<&Workflow> {
+		self.workflows.get(id)
+	}
+
+	pub fn get_workflows(&self) -> Vec<&Workflow> {
+		self.workflows.values().collect()
 	}
 
 	pub fn start_workflow(&mut self, id: &str) {
-		let workflow = &self.workflows[id];
-		Python::with_gil(|py| {
-			let workflow_config = &workflow.config;
-		});
+		if let Some(workflow) = self.workflows.get(id) {
+			Python::with_gil(|py| {
+				let workflow_config = &workflow.config;
+			});
+		}
 	}
 
 	pub fn kill_workflow(&mut self, id: &str) {
-		let workflow = &self.workflows[id];
-
-		Python::with_gil(|py| {
-			let workflow_config = &workflow.config;
-		});
+		if let Some(workflow) = self.workflows.get(id) {
+			Python::with_gil(|py| {
+				let workflow_config = &workflow.config;
+			});
+		}
 	}
 
 	pub fn restart_workflow(&mut self, id: &str) {
-		let workflow = &self.workflows[id];
+		if let Some(workflow) = self.workflows.get(id) {
+			Python::with_gil(|py| {
+				let workflow_config = &workflow.config;
+			});
+		}
+	}
 
-		Python::with_gil(|py| {
-			let workflow_config = &workflow.config;
-		});
+	fn check_workflow_exists(&self, workflow_id: &str) -> bool {
+		self.workflows.contains_key(workflow_id)
 	}
 }
