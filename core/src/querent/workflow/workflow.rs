@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use crate::config::{config::WorkflowConfig, Config};
+use dryoc::classic::crypto_shorthash::Hash;
 use pyo3::{prelude::*, types::PyDict, PyObject, ToPyObject};
 
 #[derive(Debug)]
@@ -10,52 +13,45 @@ pub struct Workflow {
 
 #[derive(Debug)]
 pub struct WorkflowManager {
-	workflows: Vec<Workflow>,
+	workflows: HashMap<String, Workflow>,
 }
 
 impl WorkflowManager {
 	pub fn new() -> Self {
-		WorkflowManager { workflows: Vec::new() }
+		WorkflowManager { workflows: HashMap::new() }
 	}
 
 	pub fn add_workflow(&mut self, workflow: Workflow) -> bool {
 		if self.check_workflow_exists(&workflow.id) {
 			return false
 		}
-		self.workflows.push(workflow);
+		self.workflows.insert(workflow.id.clone(), workflow);
 		true
 	}
 	fn check_workflow_exists(&self, workflow_id: &str) -> bool {
-		for workflow in &self.workflows {
-			if workflow.id == workflow_id {
-				return true
-			}
-		}
-		false
+		self.workflows.contains_key(workflow_id)
 	}
 
-	pub fn start_workflow(&mut self, workflow_index: usize) {
-		let workflow = &self.workflows[workflow_index];
+	pub fn start_workflow(&mut self, id: &str) {
+		let workflow = &self.workflows[id];
 		Python::with_gil(|py| {
-			let workflow_dict = workflow.config.to_object(py);
+			let workflow_config = &workflow.config;
 		});
 	}
 
-	pub fn kill_workflow(&mut self, workflow_index: usize) {
-		// Kill the Python workflow based on the given workflow_index
-		// You can use Python interop to kill the workflow here.
-		let workflow = &self.workflows[workflow_index];
+	pub fn kill_workflow(&mut self, id: &str) {
+		let workflow = &self.workflows[id];
 
 		Python::with_gil(|py| {
-			let workflow_dict = workflow.config.to_object(py);
+			let workflow_config = &workflow.config;
 		});
 	}
 
-	pub fn restart_workflow(&mut self, workflow_index: usize) {
-		let workflow = &self.workflows[workflow_index];
+	pub fn restart_workflow(&mut self, id: &str) {
+		let workflow = &self.workflows[id];
 
 		Python::with_gil(|py| {
-			let workflow_dict = workflow.config.to_object(py);
+			let workflow_config = &workflow.config;
 		});
 	}
 }
