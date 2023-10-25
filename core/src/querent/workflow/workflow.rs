@@ -74,8 +74,4 @@ impl WorkflowManager {
 			Ok(())
 		})
 	}
-
-	fn check_workflow_exists(&self, workflow_id: &str) -> bool {
-		self.workflows.lock().is_ok() && self.workflows.lock().unwrap().contains_key(workflow_id)
-	}
 }
