@@ -15,10 +15,11 @@ pub struct Config {
 }
 
 #[derive(Debug)]
+#[pyclass]
 pub struct WorkflowConfig {
-	name: String,
-	id: String,
-	config: HashMap<String, String>,
+	pub name: String,
+	pub id: String,
+	pub config: HashMap<String, String>,
 }
 
 impl<'a> FromPyObject<'a> for WorkflowConfig {
