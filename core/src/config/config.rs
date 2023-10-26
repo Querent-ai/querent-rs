@@ -14,6 +14,24 @@ pub struct Config {
 	pub resource: Option<ResourceConfig>,
 }
 
+impl Default for Config {
+	fn default() -> Self {
+		Config {
+			version: 0.1,
+			querent_id: "querent".to_string(),
+			querent_name: "Querent".to_string(),
+			workflow: WorkflowConfig {
+				name: "workflow".to_string(),
+				id: "workflow".to_string(),
+				config: HashMap::new(),
+			},
+			collectors: vec![],
+			engines: vec![],
+			resource: None,
+		}
+	}
+}
+
 #[derive(Debug, Clone)]
 pub struct WorkflowConfig {
 	pub name: String,

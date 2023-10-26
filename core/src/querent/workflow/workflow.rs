@@ -7,6 +7,7 @@ pub struct Workflow {
 	pub name: String,
 	pub id: String,
 	pub python_import_path: String,
+	pub python_start_function: String,
 	pub config: Config,
 }
 
@@ -76,7 +77,7 @@ impl WorkflowManager {
 				.map_err(|_| "Failed to import workflow.")?;
 			let inner_fut = pyo3_asyncio::async_std::into_future(
 				querent_start_workflow
-					.call_method1("start", (config,))
+					.call_method1(workflow.python_start_function.as_str(), (config,))
 					.map_err(|_| "Failed to start workflow.")?,
 			);
 			if let Ok(fut) = inner_fut {
@@ -130,5 +131,31 @@ impl WorkflowManager {
 			},
 			Err(_) => return Err("Failed to stop workflow.".to_string()),
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use async_std::task; // Import async-std for async testing
+
+	#[test]
+	fn test_start_workflow() {
+		task::block_on(async {
+			let workflow_manager = WorkflowManager::new();
+			let workflow = Workflow {
+				name: "Test Workflow".to_string(),
+				id: "test_workflow".to_string(),
+				python_import_path: "test_workflow".to_string(),
+				python_start_function: "start".to_string(),
+				config: Config::default(),
+			};
+			workflow_manager.add_workflow(workflow.clone()).unwrap();
+			let res = workflow_manager.start_workflow(&workflow.id).await;
+			match res {
+				Ok(_) => assert!(workflow_manager.is_running("test_workflow")),
+				Err(_) => assert!(false),
+			}
+		});
 	}
 }
