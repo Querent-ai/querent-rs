@@ -29,10 +29,9 @@ serde_yaml = "0.9.25"
 thiserror = "1.0.39"
 wasm-bindgen = {version = "0.2.63", optional = true}
 zeroize = "1.5.7"
-pyo3    = "0.19.0"
-pyo3-asyncio = { version = "0.19", features = ["attributes", "async-std-runtime"] }
-async-std = "1.9"
-tokio = { version = "1.12", features = ["macros"] }
+tokio = { version = "1.12.0", features = ["full"] } 
+[dependencies.pyo3]
+version = "0.20.0"
 
 [dev-dependencies]
 pretty_assertions = "1.3.0"
@@ -46,4 +45,5 @@ ctor = "^0.2.2"
 
 [features]
 wasm = ["wasm-bindgen"]
-calculate-page-capacity = []
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
