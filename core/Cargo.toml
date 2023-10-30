@@ -29,9 +29,12 @@ serde_yaml = "0.9.25"
 thiserror = "1.0.39"
 wasm-bindgen = {version = "0.2.63", optional = true}
 zeroize = "1.5.7"
-tokio = { version = "1.12.0", features = ["full"] } 
+tokio = "1.4"
+pyo3-asyncio = { version = "0.19", features = ["attributes", "tokio-runtime", "testing"] }
+futures = "0.3.29"
+
 [dependencies.pyo3]
-version = "0.20.0"
+version = "0.19.0"
 
 [dev-dependencies]
 pretty_assertions = "1.3.0"
@@ -47,3 +50,8 @@ ctor = "^0.2.2"
 wasm = ["wasm-bindgen"]
 extension-module = ["pyo3/extension-module"]
 default = ["extension-module"]
+
+[[test]]
+name = "test_workflow_manager"
+path = "pytests/test_workflow_manager.rs"
+harness = false
