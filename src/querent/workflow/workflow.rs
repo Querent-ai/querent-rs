@@ -63,7 +63,6 @@ impl WorkflowManager {
 	///
 	/// Returns a `Result` indicating success or an error message.
 	pub async fn start_workflows(&self) -> Result<(), String> {
-		pyo3::prepare_freethreaded_python();
 		let workflows = self.get_workflows();
 		let handles: Vec<_> = workflows
 			.iter()
@@ -115,7 +114,6 @@ impl WorkflowManager {
 	///
 	/// Returns a `Result` indicating success or an error message.
 	pub async fn stop_workflows(&self) -> Result<(), String> {
-		pyo3::prepare_freethreaded_python();
 		let workflows = self.get_workflows();
 		let handles: Vec<_> = workflows
 			.iter()

@@ -1,20 +1,16 @@
 [build-system]
-requires = ["maturin>=1,<2"]
+requires = ["maturin>=1.3,<2.0"]
 build-backend = "maturin"
 
 [project]
 name = "querent_rs"
-version = "0.1.0"
+requires-python = ">=3.9"
 classifiers = [
-    "License :: OSI Approved :: MIT License",
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Programming Language :: Python",
     "Programming Language :: Rust",
-    "Operating System :: POSIX",
-    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
 ]
+dynamic = ["version"]
 
-
-[tool.pytest.ini_options]
-addopts = "--benchmark-disable"
+[tool.maturin]
+features = ["pyo3/extension-module"]

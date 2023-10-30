@@ -1,6 +1,7 @@
 use crate::{
 	cross::{CLRepr, CLReprPython},
 	querent::errors::QuerentError,
+	tokio_runtime,
 };
 use log::{error, trace};
 use once_cell::sync::OnceCell;
@@ -175,5 +176,31 @@ pub fn py_runtime() -> Result<&'static PyRuntime, QuerentError> {
 			.set(runtime)
 			.map(|_| PY_RUNTIME.get().unwrap())
 			.map_err(|_| QuerentError::internal("Unable to set PyRuntime".to_string()))
+	}
+}
+
+pub fn call_async(
+	fun: Py<PyFunction>,
+	args: Vec<CLRepr>,
+) -> Result<impl Future<Output = Result<CLRepr, QuerentError>>, QuerentError> {
+	let runtime = py_runtime()?;
+	Ok(runtime.call_async(fun, args))
+}
+
+pub fn py_runtime_init() -> Result<(), QuerentError> {
+	if PY_RUNTIME.get().is_some() {
+		return Ok(())
+	}
+
+	let runtime = tokio_runtime()?;
+
+	pyo3::prepare_freethreaded_python();
+
+	pyo3_asyncio::tokio::init_with_runtime(runtime)
+		.map_err(|_| QuerentError::internal("Unable to initialize Python runtime".to_string()))?;
+	if PY_RUNTIME.set(PyRuntime::new()).is_err() {
+		Err(QuerentError::internal("Unable to set PyRuntime".to_string()))
+	} else {
+		Ok(())
 	}
 }
