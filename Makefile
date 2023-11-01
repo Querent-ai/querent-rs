@@ -20,7 +20,7 @@ check:
 .PHONY: test
 test:
 	@echo "Running Cargo test..."
-	@cargo test --all --all-targets
+	@cargo test --no-default-features
 
 .PHONY: clippy
 clippy:
@@ -43,7 +43,8 @@ format-check:
 .PHONY: build
 build:
 	@echo "Running Cargo build..."
-	@cargo build --all --all-features --all-targets
+	@cargo install maturin
+	@cargo build --release --all-features
 
 .PHONY: doc
 doc:

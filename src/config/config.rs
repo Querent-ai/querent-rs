@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use pyo3::{prelude::*, types::PyDict, PyObject, ToPyObject};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[pyclass]
 pub struct Config {
 	pub version: f32,
@@ -14,11 +14,29 @@ pub struct Config {
 	pub resource: Option<ResourceConfig>,
 }
 
-#[derive(Debug)]
+impl Default for Config {
+	fn default() -> Self {
+		Config {
+			version: 0.1,
+			querent_id: "querent".to_string(),
+			querent_name: "Querent".to_string(),
+			workflow: WorkflowConfig {
+				name: "workflow".to_string(),
+				id: "workflow".to_string(),
+				config: HashMap::new(),
+			},
+			collectors: vec![],
+			engines: vec![],
+			resource: None,
+		}
+	}
+}
+
+#[derive(Debug, Clone)]
 pub struct WorkflowConfig {
-	name: String,
-	id: String,
-	config: HashMap<String, String>,
+	pub name: String,
+	pub id: String,
+	pub config: HashMap<String, String>,
 }
 
 impl<'a> FromPyObject<'a> for WorkflowConfig {
@@ -41,7 +59,7 @@ impl ToPyObject for WorkflowConfig {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CollectorConfig {
 	name: String,
 	backend: String,
@@ -68,7 +86,7 @@ impl ToPyObject for CollectorConfig {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EngineConfig {
 	name: String,
 	num_workers: Option<u32>,
@@ -115,7 +133,7 @@ impl ToPyObject for EngineConfig {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResourceConfig {
 	max_workers_allowed: Option<u32>,
 	max_workers_per_collector: Option<u32>,

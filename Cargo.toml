@@ -1,20 +1,63 @@
-[workspace]
-members = [
-    "core",
-    "log-result-proc-macro",
-]
+[package]
+name = "querent-rs"
+edition = "2021"
+homepage = "https://querent.xyz"
+license = "Apache-2.0"
+publish = false
+repository = "https://github.com/querent-ai/querent-rs"
+version = "1.0.0"
 
-default-members = [
-    "core",
-    "log-result-proc-macro",
-]
-resolver = "2"
+[lib]
+name = "querent_rs"
+path = "src/lib.rs"
+doctest = false
 
-[profile.release]
-panic = "unwind"
+[dependencies]
+anyhow = "1.0.69"
+apache-avro = { version = "0.16.0", features = ["snappy"] }
+dryoc = "0.5.1"
+lazy_static = "1.4.0"
+log = { version = "^0.4.17", features = ["std", "max_level_debug", "release_max_level_debug"] }
+miniz_oxide = "0.7.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11.9"
+serde_with = "3.3.0"
+serde_json = "1.0.96"
+serde_yaml = "0.9.25"
+thiserror = "1.0.39"
+wasm-bindgen = {version = "0.2.63", optional = true}
+zeroize = "1.5.7"
+tokio = { version = "1.0", features = ["full", "rt", "tracing"] }
+tokio-util = { version = "0.6.2", features=["compat"] }
+pyo3-asyncio = { version = "0.19", features = ["attributes", "tokio-runtime", "testing"] }
+futures = "0.3.29"
+base64 = "0.21.5"
+once_cell = "1.18.0"
 
-[profile.production]
-inherits = "release"
-lto = true
-codegen-units = 1
-strip = true
+[dependencies.pyo3]
+version = "0.19.0"
+
+[dev-dependencies]
+pretty_assertions = "1.3.0"
+rand = "0.8.5"
+hex = "0.4.3"
+base64 = "0.21.0"
+ntest = "0.9.0"
+log = "0.4.17"
+env_logger = "^0.10.0"
+ctor = "^0.2.2"
+
+[features]
+wasm = ["wasm-bindgen"]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
+
+[[test]]
+name = "test_basic"
+path = "pytests/test_basic.rs"
+harness = false
+
+[[test]]
+name = "test_workflow_manager"
+path = "pytests/test_workflow_manager.rs"
+harness = false
