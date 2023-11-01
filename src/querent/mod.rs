@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 pub mod errors;
 pub use errors::*;
 pub mod types;
