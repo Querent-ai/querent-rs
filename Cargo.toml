@@ -53,6 +53,11 @@ extension-module = ["pyo3/extension-module"]
 default = ["extension-module"]
 
 [[test]]
+name = "test_basic"
+path = "pytests/test_basic.rs"
+harness = false
+
+[[test]]
 name = "test_workflow_manager"
 path = "pytests/test_workflow_manager.rs"
 harness = false
