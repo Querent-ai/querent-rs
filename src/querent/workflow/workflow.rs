@@ -1,7 +1,13 @@
-use crate::config::Config;
-use pyo3::prelude::*;
+use crate::{
+	config::Config,
+	querent::{py_runtime, PyRuntime},
+};
+use pyo3::{
+	prelude::*,
+	types::{PyDict, PyFunction},
+};
 use std::{collections::HashMap, sync::Mutex};
-use tokio::task::spawn_blocking;
+use tokio::{runtime::Runtime, task::spawn_blocking};
 
 /// Represents a workflow.
 #[derive(Debug, Clone)]
@@ -10,19 +16,23 @@ pub struct Workflow {
 	pub id: String,
 	pub python_import_path: String,
 	pub python_start_function: String,
-	pub python_stop_function: String,
-	pub config: Config,
+	pub arguments: Config,
 }
 
 /// Manages workflows and their execution.
 pub struct WorkflowManager {
-	workflows: Mutex<HashMap<String, Workflow>>,
+	pub workflows: Mutex<HashMap<String, Workflow>>,
+	pub runtime: &'static PyRuntime,
 }
 
 impl WorkflowManager {
 	/// Creates a new `WorkflowManager` instance.
 	pub fn new() -> Self {
-		WorkflowManager { workflows: Mutex::new(HashMap::new()) }
+		let runtime = py_runtime();
+		match runtime {
+			Ok(runtime) => Self { workflows: Mutex::new(HashMap::new()), runtime },
+			Err(_) => panic!("Failed to create Python runtime."),
+		}
 	}
 
 	/// Adds a workflow to the manager.
@@ -67,24 +77,33 @@ impl WorkflowManager {
 		let handles: Vec<_> = workflows
 			.iter()
 			.map(|workflow| {
-				let config = workflow.config.clone();
+				let args = workflow.arguments.clone();
 				let python_import_path = workflow.python_import_path.clone();
 				let python_start_function = workflow.python_start_function.clone();
+				let runtime_local = self.runtime;
+
 				spawn_blocking(move || {
 					Python::with_gil(|py| {
+						// Import the Python module
 						let querent_start_workflow = py
 							.import(python_import_path.as_str())
-							.map_err(|_| "Failed to import workflow.");
-						if querent_start_workflow.is_err() {
-							panic!("Failed to import workflow.")
-						}
-						let coroutine = querent_start_workflow
-							.unwrap()
-							.call_method1(python_start_function.as_str(), (config,))
-							.map_err(|_| "Failed to start workflow.")?;
+							.map_err(|_| "Failed to import workflow.")
+							.unwrap(); // You may want to handle this error more gracefully
 
-						pyo3_asyncio::tokio::into_future(coroutine)
-							.map_err(|_| "Failed to start workflow.")
+						// Get the Python function
+						let coroutine = querent_start_workflow
+							.getattr(python_start_function.as_str())
+							.map_err(|_| "Failed to find start function.")
+							.unwrap(); // You may want to handle this error more gracefully
+
+						// Call the Python function with arguments
+						let result = coroutine.call1((args,)).unwrap(); // You may want to handle this error more gracefully
+
+						// Convert the result into a Py<PyFunction>
+						let querent_py_fun: Py<PyFunction> = result.extract().unwrap(); // You may want to handle this error more gracefully
+
+						// Call your runtime's call_async function with the PyFunction and arguments
+						runtime_local.call_async(querent_py_fun, Vec::new())
 					})
 				})
 			})
@@ -92,55 +111,12 @@ impl WorkflowManager {
 
 		for handle in handles {
 			let result = handle.await.map_err(|_| "Failed to start workflow.".to_string())?;
-			if result.is_err() {
-				return Err("Failed to start workflow.".to_string())
-			}
-
-			let result = result.unwrap();
 			match result.await {
 				Ok(_) => {
 					println!("Workflow started.");
 					println!("Waiting for workflow to complete...");
 				},
 				Err(_) => return Err("Failed to start workflow.".to_string()),
-			}
-		}
-		Ok(())
-	}
-
-	/// Stops a running workflow by executing its Python code asynchronously.
-	///
-	/// # Returns
-	///
-	/// Returns a `Result` indicating success or an error message.
-	pub async fn stop_workflows(&self) -> Result<(), String> {
-		let workflows = self.get_workflows();
-		let handles: Vec<_> = workflows
-			.iter()
-			.map(|workflow| {
-				let python_import_path = workflow.python_import_path.clone();
-				let python_stop_function = workflow.python_stop_function.clone();
-				spawn_blocking(move || {
-					Python::with_gil(|py| {
-						let querent_stop_workflow = py
-							.import(python_import_path.as_str())
-							.map_err(|_| "Failed to import workflow.");
-						let coroutine = querent_stop_workflow
-							.unwrap()
-							.call_method0(python_stop_function.as_str())
-							.map_err(|_| "Failed to stop workflow.");
-
-						pyo3_asyncio::tokio::into_future(coroutine.unwrap())
-							.map_err(|_| "Failed to stop workflow.")
-					})
-				})
-			})
-			.collect();
-
-		for handle in handles {
-			let result = handle.await.map_err(|_| "Failed to stop workflow.".to_string())?;
-			if result.is_err() {
-				return Err("Failed to stop workflow.".to_string())
 			}
 		}
 		Ok(())
