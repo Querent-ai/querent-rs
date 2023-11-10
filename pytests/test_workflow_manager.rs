@@ -27,9 +27,9 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 		arguments: args,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
-	// match workflow_manager.start_workflows().await {
-	// 	Ok(_) => (),
-	// 	Err(e) => panic!("Error starting workflows: {}", e),
-	// }
+	match workflow_manager.start_workflows().await {
+		Ok(_) => assert!(true),
+		Err(e) => panic!("Error starting workflows: {}", e),
+	}
 	Ok(())
 }
