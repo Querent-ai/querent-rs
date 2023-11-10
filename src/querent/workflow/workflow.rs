@@ -1,7 +1,10 @@
 use crate::{
 	config::Config,
-	querent::{py_runtime, PyRuntime},
+	cross::CLRepr,
+	querent::{py_runtime, PyRuntime, QuerentError},
+	tokio_runtime,
 };
+use log;
 use pyo3::{
 	prelude::*,
 	types::{PyDict, PyFunction},
@@ -14,9 +17,9 @@ use tokio::{runtime::Runtime, task::spawn_blocking};
 pub struct Workflow {
 	pub name: String,
 	pub id: String,
-	pub python_import_path: String,
-	pub python_start_function: String,
-	pub arguments: Config,
+	pub import: String,
+	pub attr: String,
+	pub arguments: Vec<CLRepr>,
 }
 
 /// Manages workflows and their execution.
@@ -72,52 +75,48 @@ impl WorkflowManager {
 	/// # Returns
 	///
 	/// Returns a `Result` indicating success or an error message.
-	pub async fn start_workflows(&self) -> Result<(), String> {
+	pub async fn start_workflows(&self) -> Result<(), QuerentError> {
 		let workflows = self.get_workflows();
 		let handles: Vec<_> = workflows
 			.iter()
 			.map(|workflow| {
 				let args = workflow.arguments.clone();
-				let python_import_path = workflow.python_import_path.clone();
-				let python_start_function = workflow.python_start_function.clone();
+				let python_import_path = workflow.import.clone();
+				let python_start_function = workflow.attr.clone();
 				let runtime_local = self.runtime;
+				Python::with_gil(|py| {
+					// Import the Python module
+					let querent_start_workflow = py
+						.import(python_import_path.as_str())
+						.map_err(|_| "Failed to import workflow.")
+						.expect("Failed to import workflow.");
 
-				spawn_blocking(move || {
-					Python::with_gil(|py| {
-						// Import the Python module
-						let querent_start_workflow = py
-							.import(python_import_path.as_str())
-							.map_err(|_| "Failed to import workflow.")
-							.unwrap(); // You may want to handle this error more gracefully
+					// Get the Python function
+					let coroutine = querent_start_workflow
+						.getattr(python_start_function.as_str())
+						.map_err(|_| "Failed to find start function.")
+						.expect("Failed to find start function.");
 
-						// Get the Python function
-						let coroutine = querent_start_workflow
-							.getattr(python_start_function.as_str())
-							.map_err(|_| "Failed to find start function.")
-							.unwrap(); // You may want to handle this error more gracefully
+					// Convert the result into a Py<PyFunction>
+					let querent_py_fun: Py<PyFunction> =
+						coroutine.extract().expect("Failed to extract function.");
 
-						// Call the Python function with arguments
-						let result = coroutine.call1((args,)).unwrap(); // You may want to handle this error more gracefully
+					// Call your runtime's call_async function with the PyFunction and arguments
+					let call_future = runtime_local.call_async(querent_py_fun, args);
+					let tokio = tokio_runtime()
+						.map_err(|_| "Failed to init tokio runtime.")
+						.expect("Failed to init tokio runtime.");
 
-						// Convert the result into a Py<PyFunction>
-						let querent_py_fun: Py<PyFunction> = result.extract().unwrap(); // You may want to handle this error more gracefully
-
-						// Call your runtime's call_async function with the PyFunction and arguments
-						runtime_local.call_async(querent_py_fun, Vec::new())
-					})
+					// Spawn the future on the tokio runtime
+					tokio.spawn(call_future)
 				})
 			})
 			.collect();
-
 		for handle in handles {
-			let result = handle.await.map_err(|_| "Failed to start workflow.".to_string())?;
-			match result.await {
-				Ok(_) => {
-					println!("Workflow started.");
-					println!("Waiting for workflow to complete...");
-				},
-				Err(_) => return Err("Failed to start workflow.".to_string()),
-			}
+			handle
+				.await
+				.map(|_| log::info!("Workflow started successfully."))
+				.map_err(|_| QuerentError::internal("Error starting workflow.".to_string()))?;
 		}
 		Ok(())
 	}
