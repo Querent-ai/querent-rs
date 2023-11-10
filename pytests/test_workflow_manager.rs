@@ -18,7 +18,7 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 	let workflow_manager = WorkflowManager::new();
 	//let config = Config::default();
 	let mut args: Vec<CLRepr> = Vec::new();
-	args.push(CLRepr::String("1".to_string(), StringType::Normal));
+	args.push(CLRepr::String("1000".to_string(), StringType::Normal));
 	let test_flow: Workflow = Workflow {
 		name: "test_flow_basic".to_string(),
 		id: "id1".to_string(),

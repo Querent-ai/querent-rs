@@ -113,10 +113,16 @@ impl WorkflowManager {
 			})
 			.collect();
 		for handle in handles {
-			handle
+			let result = handle
 				.await
 				.map(|_| log::info!("Workflow started successfully."))
-				.map_err(|_| QuerentError::internal("Error starting workflow.".to_string()))?;
+				.map_err(|_| QuerentError::internal("Error starting workflow.".to_string()));
+			match result {
+				Ok(_) => (),
+				Err(e) => {
+					panic!("Error starting workflow: {}", e);
+				},
+			}
 		}
 		Ok(())
 	}
