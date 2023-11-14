@@ -1,5 +1,5 @@
 use querent_rs::{
-	cross::CLRepr,
+	cross::{CLRepr, StringType},
 	querent::workflow::{Workflow, WorkflowManager},
 };
 
@@ -35,11 +35,11 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 	Ok(())
 }
 
-const _CODE: &str = r#"
-def function(*args):
-    assert args == ("hello",)
-    return "called with args and kwargs"
-"#;
+// const CODE: &str = r#"
+// def function(*args):
+//     assert args == ("hello",)
+//     return "called with args and kwargs"
+// "#;
 
 // #[pyo3_asyncio::tokio::test]
 // async fn workflow_manager_with_code_tests() -> pyo3::PyResult<()> {
@@ -51,7 +51,7 @@ def function(*args):
 // 	let test_flow_with_code: Workflow = Workflow {
 // 		name: "test_flow_with_code".to_string(),
 // 		id: "id2".to_string(),
-// 		import: "asyncio".to_string(),
+// 		import: "".to_string(),
 // 		attr: "function".to_string(),
 // 		arguments: args,
 // 		code: Some(CODE.to_string()),
