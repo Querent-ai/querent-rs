@@ -5,6 +5,7 @@ use crate::{
 	tokio_runtime,
 };
 use core::panic;
+use futures::TryFutureExt;
 use log;
 use pyo3::{
 	prelude::*,
@@ -74,37 +75,39 @@ impl WorkflowManager {
 	/// Returns a `Result` indicating success or an error message.
 	pub async fn start_workflows(&self) -> Result<(), QuerentError> {
 		let workflows = self.get_workflows();
-		let _tokio = tokio_runtime();
+		let _tokio = tokio_runtime().map_err(|e| QuerentError::internal(e.to_string()))?;
 		let handles: Vec<_> = workflows
 			.iter()
 			.map(|_workflow| {
 				let args = _workflow.arguments.clone();
-				let mut args_tuple = Vec::with_capacity(args.len());
 				let res = Python::with_gil(|py| {
-					for arg in args {
-						args_tuple.push(arg.into_py(py)?);
-					}
+					let async_mod = py
+						.import(_workflow.import.as_str())
+						.map_err(|e| {
+							log::error!("Failed to import module {}: {}", _workflow.import, e);
+							QuerentError::internal(e.to_string())
+						})
+						.expect("Failed to import module.");
 
-					let args = PyTuple::new(py, args_tuple);
+					// Get the Python function
+					let coroutine = async_mod
+						.getattr(_workflow.attr.as_str())
+						.map_err(|_| "Failed to find start function.")
+						.expect("Failed to find start function.");
 
-					let async_mod = py.import(_workflow.import.as_str())?;
-					let rust_fut = pyo3_asyncio::tokio::into_future(
-						async_mod.call_method1(_workflow.attr.as_str(), args)?,
-					);
-					rust_fut
-				})
-				.map_err(|e| {
-					log::error!("Failed to map workflow to Rust future: {}", e);
-					QuerentError::internal(e.to_string())
-				})
-				.expect("Failed to map workflow to Rust future.");
-				res // Return the future
+					let querent_py_fun: Py<PyFunction> =
+						coroutine.extract().expect("Failed to extract function.");
+					let call_future = self.runtime.call_async(querent_py_fun, args);
+					call_future
+				});
+				// use tokio to spawn a future
+				_tokio.spawn(res)
 			})
 			.collect();
 
 		// Wait for all the tasks to finish
 		for handle in handles {
-			handle.await.map_err(|e| QuerentError::internal(e.to_string()))?;
+			let _ = handle.await.map_err(|e| QuerentError::internal(e.to_string()))?;
 		}
 		Ok(())
 	}
