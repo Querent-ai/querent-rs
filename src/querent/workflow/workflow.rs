@@ -21,7 +21,6 @@ pub struct Workflow {
 	pub import: String,
 	pub attr: String,
 	pub arguments: Vec<CLRepr>,
-	pub code: Option<String>,
 }
 
 /// Manages workflows and their execution.
@@ -32,14 +31,10 @@ pub struct WorkflowManager {
 
 impl WorkflowManager {
 	/// Creates a new `WorkflowManager` instance.
-	pub fn new() -> Self {
-		let runtime = py_runtime();
-		match runtime {
-			Ok(runtime) => Self { workflows: Mutex::new(HashMap::new()), runtime },
-			Err(_) => panic!("Failed to create Python runtime."),
-		}
+	pub fn new() -> Result<Self, String> {
+		let runtime = py_runtime().map_err(|e| e.to_string())?;
+		Ok(Self { workflows: Mutex::new(HashMap::new()), runtime })
 	}
-
 	/// Adds a workflow to the manager.
 	///
 	/// # Arguments
@@ -86,32 +81,22 @@ impl WorkflowManager {
 				let args = _workflow.arguments.clone();
 				let mut args_tuple = Vec::with_capacity(args.len());
 				let res = Python::with_gil(|py| {
-					let async_mod: &PyModule = match _workflow.code {
-						Some(_) => {
-							let async_mod = PyModule::from_code(
-								py,
-								_workflow.code.as_ref().unwrap(),
-								_workflow.id.as_str(),
-								_workflow.name.as_str(),
-							)?;
-							async_mod
-						},
-						None => {
-							let async_mod = py.import(_workflow.import.as_str())?;
-							async_mod
-						},
-					};
 					for arg in args {
 						args_tuple.push(arg.into_py(py)?);
 					}
 
 					let args = PyTuple::new(py, args_tuple);
+
+					let async_mod = py.import(_workflow.import.as_str())?;
 					let rust_fut = pyo3_asyncio::tokio::into_future(
 						async_mod.call_method1(_workflow.attr.as_str(), args)?,
 					);
 					rust_fut
 				})
-				.map_err(|e| QuerentError::internal(e.to_string()))
+				.map_err(|e| {
+					log::error!("Failed to map workflow to Rust future: {}", e);
+					QuerentError::internal(e.to_string())
+				})
 				.expect("Failed to map workflow to Rust future.");
 				res // Return the future
 			})
@@ -122,5 +107,19 @@ impl WorkflowManager {
 			handle.await.map_err(|e| QuerentError::internal(e.to_string()))?;
 		}
 		Ok(())
+	}
+}
+
+impl Drop for WorkflowManager {
+	fn drop(&mut self) {
+		log::info!("Dropping WorkflowManager");
+		let _ = self.runtime;
+
+		// cleanup the Python runtime
+		Python::with_gil(|py| {
+			let sys = py.import("sys").expect("Failed to import sys module");
+			let exit = sys.getattr("exit").expect("sys module does not have attribute exit");
+			let _ = exit.call0();
+		});
 	}
 }
