@@ -4,6 +4,7 @@ use crate::{
 	querent::{py_runtime, PyRuntime, QuerentError},
 	tokio_runtime,
 };
+use futures::TryFutureExt;
 use log;
 use pyo3::{prelude::*, types::PyFunction};
 use std::{collections::HashMap, sync::Mutex};
@@ -81,7 +82,7 @@ impl WorkflowManager {
 						})?;
 
 						let call_future = self.runtime.call_async(querent_py_fun, args);
-						Ok(call_future)
+						Ok(_tokio.spawn(call_future))
 					}),
 					Some(code) => {
 						let module_file: String = _workflow.id.clone() + ".py";
@@ -112,7 +113,7 @@ impl WorkflowManager {
 								})?;
 
 							let call_future = self.runtime.call_async(querent_py_fun, args);
-							Ok(call_future)
+							Ok(_tokio.spawn(call_future))
 						})
 					},
 				};
@@ -121,15 +122,12 @@ impl WorkflowManager {
 			.collect();
 		for handle in handles {
 			match handle {
-				Ok(future) => {
-					let tokio_fut = _tokio.spawn(future);
-					match tokio_fut.await {
-						Ok(_) => log::info!("Workflow started."),
-						Err(e) => {
-							log::error!("Failed to start workflow: {}", e);
-							return Err(QuerentError::internal(e.to_string()))
-						},
-					}
+				Ok(future) => match future.await {
+					Ok(_) => log::info!("Workflow started."),
+					Err(e) => {
+						log::error!("Failed to start workflow: {}", e);
+						return Err(QuerentError::internal(e.to_string()))
+					},
 				},
 				Err(e) => {
 					log::error!("Failed to start workflow: {}", e);
