@@ -38,9 +38,6 @@ impl WorkflowManager {
 	pub fn add_workflow(&self, workflow: Workflow) -> Result<(), String> {
 		let mut workflows =
 			self.workflows.lock().map_err(|e| format!("Mutex lock failed: {}", e))?;
-		if workflows.len() >= 1 {
-			return Err("Only one workflow is supported.".to_string())
-		}
 		if workflows.contains_key(&workflow.id) {
 			return Err("Workflow with the same ID already exists.".to_string())
 		} else {

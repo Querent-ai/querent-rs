@@ -77,3 +77,44 @@ async fn workflow_manager_python_tests() -> pyo3::PyResult<()> {
 	}
 	Ok(())
 }
+
+#[pyo3_asyncio::tokio::test]
+async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
+	let workflow_manager_res = WorkflowManager::new();
+	if let Err(e) = workflow_manager_res {
+		panic!("Error creating workflow manager: {}", e);
+	}
+	let workflow_manager = workflow_manager_res.unwrap();
+
+	// Add multiple workflows
+	let mut args1: Vec<CLRepr> = Vec::new();
+	args1.push(CLRepr::Int(1));
+	let test_flow1 = Workflow {
+		name: "test_flow_1".to_string(),
+		id: "id3".to_string(),
+		import: "asyncio".to_string(),
+		attr: "sleep".to_string(),
+		arguments: args1,
+		code: None,
+	};
+	assert!(workflow_manager.add_workflow(test_flow1).is_ok());
+
+	let mut args2: Vec<CLRepr> = Vec::new();
+	args2.push(CLRepr::Int(2));
+	let test_flow2 = Workflow {
+		name: "test_flow_2".to_string(),
+		id: "id4".to_string(),
+		import: "asyncio".to_string(),
+		attr: "sleep".to_string(),
+		arguments: args2,
+		code: None,
+	};
+	assert!(workflow_manager.add_workflow(test_flow2).is_ok());
+
+	// Start workflows
+	match workflow_manager.start_workflows().await {
+		Ok(_) => assert!(true),
+		Err(e) => panic!("Error starting workflows: {}", e),
+	}
+	Ok(())
+}
