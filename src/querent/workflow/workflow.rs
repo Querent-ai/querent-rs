@@ -21,6 +21,7 @@ pub struct Workflow {
 	pub id: String,
 	pub import: String,
 	pub attr: String,
+	pub code: Option<String>,
 	pub arguments: Vec<CLRepr>,
 }
 
@@ -80,31 +81,67 @@ impl WorkflowManager {
 			.iter()
 			.map(|_workflow| {
 				let args = _workflow.arguments.clone();
-				let res = Python::with_gil(|py| {
-					let async_mod = py
-						.import(_workflow.import.as_str())
-						.map_err(|e| {
+				let res = match &_workflow.code {
+					None => Python::with_gil(|py| {
+						let async_mod = py.import(_workflow.import.as_str()).map_err(|e| {
 							log::error!("Failed to import module {}: {}", _workflow.import, e);
 							QuerentError::internal(e.to_string())
+						})?;
+
+						// Get the Python function
+						let coroutine =
+							async_mod.getattr(_workflow.attr.as_str()).map_err(|_| {
+								log::error!("Failed to find start function.");
+								QuerentError::internal("Failed to find start function.".to_string())
+							})?;
+
+						let querent_py_fun: Py<PyFunction> = coroutine.extract().map_err(|e| {
+							log::error!("Failed to extract function: {}", e);
+							QuerentError::internal(e.to_string())
+						})?;
+
+						let call_future = self.runtime.call_async(querent_py_fun, args);
+						Ok(call_future)
+					}),
+					Some(code) => {
+						let module_file: String = _workflow.id.clone() + ".py";
+						Python::with_gil(|py| {
+							let dynamic_module = PyModule::from_code(
+								py,
+								code.as_str(),
+								module_file.as_str(),
+								_workflow.name.as_str(),
+							)
+							.map_err(|e| {
+								log::error!("Failed to import module {}: {}", _workflow.import, e);
+								QuerentError::internal(e.to_string())
+							})?;
+
+							let attr_fun =
+								dynamic_module.getattr(_workflow.attr.as_str()).map_err(|_| {
+									log::error!("Failed to find start function.");
+									QuerentError::internal(
+										"Failed to find start function.".to_string(),
+									)
+								})?;
+
+							let querent_py_fun: Py<PyFunction> =
+								attr_fun.extract().map_err(|e| {
+									log::error!("Failed to extract function: {}", e);
+									QuerentError::internal(e.to_string())
+								})?;
+
+							let call_future = self.runtime.call_async(querent_py_fun, args);
+							Ok(call_future)
 						})
-						.expect("Failed to import module.");
-
-					// Get the Python function
-					let coroutine = async_mod
-						.getattr(_workflow.attr.as_str())
-						.map_err(|_| "Failed to find start function.")
-						.expect("Failed to find start function.");
-
-					let querent_py_fun: Py<PyFunction> =
-						coroutine.extract().expect("Failed to extract function.");
-					let call_future = self.runtime.call_async(querent_py_fun, args);
-					call_future
-				});
-				// use tokio to spawn a future
-				_tokio.spawn(res)
+					},
+				};
+				_tokio.spawn(res.unwrap_or_else(|e: QuerentError| {
+					log::error!("Failed to spawn task: {}", e);
+					panic!("Failed to spawn task: {}", e);
+				}))
 			})
 			.collect();
-
 		// Wait for all the tasks to finish
 		for handle in handles {
 			let _ = handle.await.map_err(|e| QuerentError::internal(e.to_string()))?;

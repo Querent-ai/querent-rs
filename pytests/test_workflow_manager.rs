@@ -29,6 +29,7 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 		import: "asyncio".to_string(),
 		attr: "sleep".to_string(),
 		arguments: args,
+		code: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
