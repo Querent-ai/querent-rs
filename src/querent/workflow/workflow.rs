@@ -4,15 +4,10 @@ use crate::{
 	querent::{py_runtime, PyRuntime, QuerentError},
 	tokio_runtime,
 };
-use core::panic;
-use futures::TryFutureExt;
 use log;
-use pyo3::{
-	prelude::*,
-	types::{PyDict, PyFunction, PyTuple},
-};
+use pyo3::{prelude::*, types::PyFunction};
 use std::{collections::HashMap, sync::Mutex};
-use tokio::{runtime::Runtime, task::spawn_blocking};
+use tokio::runtime::Runtime;
 
 /// Represents a workflow.
 #[derive(Debug, Clone)]
@@ -37,17 +32,11 @@ impl WorkflowManager {
 		let runtime = py_runtime().map_err(|e| e.to_string())?;
 		Ok(Self { workflows: Mutex::new(HashMap::new()), runtime })
 	}
+
 	/// Adds a workflow to the manager.
-	///
-	/// # Arguments
-	///
-	/// * `workflow` - The workflow to be added.
-	///
-	/// # Returns
-	///
-	/// Returns a `Result` indicating success or an error message.
 	pub fn add_workflow(&self, workflow: Workflow) -> Result<(), String> {
-		let mut workflows = self.workflows.lock().map_err(|_| "Mutex lock failed.".to_string())?;
+		let mut workflows =
+			self.workflows.lock().map_err(|e| format!("Mutex lock failed: {}", e))?;
 		if workflows.len() >= 1 {
 			return Err("Only one workflow is supported.".to_string())
 		}
@@ -60,20 +49,12 @@ impl WorkflowManager {
 	}
 
 	/// Retrieves a list of all workflows managed by this manager.
-	///
-	/// # Returns
-	///
-	/// Returns a `Vec` containing all the managed workflows.
 	pub fn get_workflows(&self) -> Vec<Workflow> {
-		let workflows = self.workflows.lock().ok().unwrap();
+		let workflows = self.workflows.lock().unwrap();
 		workflows.values().cloned().collect()
 	}
 
 	/// Starts a workflow by executing its Python code asynchronously.
-	///
-	/// # Returns
-	///
-	/// Returns a `Result` indicating success or an error message.
 	pub async fn start_workflows(&self) -> Result<(), QuerentError> {
 		let workflows = self.get_workflows();
 		let _tokio = tokio_runtime().map_err(|e| QuerentError::internal(e.to_string()))?;
@@ -88,7 +69,6 @@ impl WorkflowManager {
 							QuerentError::internal(e.to_string())
 						})?;
 
-						// Get the Python function
 						let coroutine =
 							async_mod.getattr(_workflow.attr.as_str()).map_err(|_| {
 								log::error!("Failed to find start function.");
@@ -136,15 +116,26 @@ impl WorkflowManager {
 						})
 					},
 				};
-				_tokio.spawn(res.unwrap_or_else(|e: QuerentError| {
-					log::error!("Failed to spawn task: {}", e);
-					panic!("Failed to spawn task: {}", e);
-				}))
+				res
 			})
 			.collect();
-		// Wait for all the tasks to finish
 		for handle in handles {
-			let _ = handle.await.map_err(|e| QuerentError::internal(e.to_string()))?;
+			match handle {
+				Ok(future) => {
+					let tokio_fut = _tokio.spawn(future);
+					match tokio_fut.await {
+						Ok(_) => log::info!("Workflow started."),
+						Err(e) => {
+							log::error!("Failed to start workflow: {}", e);
+							return Err(QuerentError::internal(e.to_string()))
+						},
+					}
+				},
+				Err(e) => {
+					log::error!("Failed to start workflow: {}", e);
+					return Err(e)
+				},
+			}
 		}
 		Ok(())
 	}
@@ -157,9 +148,13 @@ impl Drop for WorkflowManager {
 
 		// cleanup the Python runtime
 		Python::with_gil(|py| {
-			let sys = py.import("sys").expect("Failed to import sys module");
-			let exit = sys.getattr("exit").expect("sys module does not have attribute exit");
-			let _ = exit.call0();
+			if let Err(e) = py
+				.import("sys")
+				.and_then(|sys| sys.getattr("exit"))
+				.and_then(|exit| exit.call0())
+			{
+				log::error!("Failed to exit Python runtime: {}", e);
+			}
 		});
 	}
 }
