@@ -1,4 +1,5 @@
 use crate::{
+	config::Config,
 	cross::{CLRepr, CLReprPython},
 	querent::errors::QuerentError,
 	tokio_runtime,
@@ -17,6 +18,7 @@ pub struct PyAsyncFun {
 	fun: Py<PyFunction>,
 	args: Vec<CLRepr>,
 	callback: PyAsyncCallback,
+	config: Option<Config>,
 }
 
 pub enum PyAsyncCallback {
@@ -32,8 +34,8 @@ impl std::fmt::Debug for PyAsyncCallback {
 }
 
 impl PyAsyncFun {
-	pub fn split(self) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback) {
-		(self.fun, self.args, self.callback)
+	pub fn split(self) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback, Option<Config>) {
+		(self.fun, self.args, self.callback, self.config)
 	}
 }
 
@@ -50,11 +52,12 @@ impl PyRuntime {
 		&self,
 		fun: Py<PyFunction>,
 		args: Vec<CLRepr>,
+		config: Option<Config>,
 	) -> Result<CLRepr, QuerentError> {
 		let (rx, tx) = oneshot::channel();
 
 		self.sender
-			.send(PyAsyncFun { fun, args, callback: PyAsyncCallback::Channel(rx) })
+			.send(PyAsyncFun { fun, args, callback: PyAsyncCallback::Channel(rx), config })
 			.await
 			.map_err(|err| {
 				QuerentError::internal(format!("Unable to schedule python function call: {}", err))
@@ -64,13 +67,17 @@ impl PyRuntime {
 	}
 
 	fn process_coroutines(task: PyAsyncFun) -> Result<(), QuerentError> {
-		let (fun, args, callback) = task.split();
+		let (fun, args, callback, config) = task.split();
 
 		let task_result = Python::with_gil(move |py| -> PyResult<PyAsyncFunResult> {
 			let mut args_tuple = Vec::with_capacity(args.len());
 
 			for arg in args {
 				args_tuple.push(arg.into_py(py)?);
+			}
+
+			if let Some(config) = config {
+				args_tuple.push(config.into_py(py));
 			}
 
 			let args = PyTuple::new(py, args_tuple);
@@ -182,9 +189,10 @@ pub fn py_runtime() -> Result<&'static PyRuntime, QuerentError> {
 pub fn call_async(
 	fun: Py<PyFunction>,
 	args: Vec<CLRepr>,
+	config: Option<Config>,
 ) -> Result<impl Future<Output = Result<CLRepr, QuerentError>>, QuerentError> {
 	let runtime = py_runtime()?;
-	Ok(runtime.call_async(fun, args))
+	Ok(runtime.call_async(fun, args, config))
 }
 
 pub fn py_runtime_init() -> Result<(), QuerentError> {
