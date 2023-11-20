@@ -19,7 +19,6 @@ pub struct Workflow {
 	pub attr: String,
 	pub code: Option<String>,
 	pub arguments: Vec<CLRepr>,
-	// only used for Python workflows
 	pub config: Option<Config>,
 }
 
@@ -111,7 +110,11 @@ impl WorkflowManager {
 									QuerentError::internal(e.to_string())
 								})?;
 
-							let call_future = self.runtime.call_async(querent_py_fun, args, None);
+							let call_future = self.runtime.call_async(
+								querent_py_fun,
+								args,
+								_workflow.config.clone(),
+							);
 							Ok(call_future)
 						})
 					},

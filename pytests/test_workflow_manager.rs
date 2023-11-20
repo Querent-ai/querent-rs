@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use querent_rs::{
+	config::{config::WorkflowConfig, Config},
 	cross::{CLRepr, StringType},
 	querent::workflow::{Workflow, WorkflowManager},
 };
@@ -157,5 +160,55 @@ async fn workflow_manager_python_test_with_result() -> pyo3::PyResult<()> {
 		},
 		Err(e) => panic!("Error starting workflows: {}", e),
 	}
+	Ok(())
+}
+
+const CODE_CONFIG: &str = r#"
+import asyncio
+
+async def print_querent(text: str, config):
+    """Prints the provided text and config"""
+    print(text)
+    print(config)
+"#;
+
+#[pyo3_asyncio::tokio::test]
+async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
+	// Create a sample Config object
+	let config = Config {
+		version: 1.0,
+		querent_id: "test_querent".to_string(),
+		querent_name: "Test Querent".to_string(),
+		workflow: WorkflowConfig {
+			name: "test_workflow".to_string(),
+			id: "workflow_id".to_string(),
+			config: HashMap::new(),
+		},
+		collectors: vec![],
+		engines: vec![],
+		resource: None,
+	};
+
+	// Create a sample Workflow
+	let workflow = Workflow {
+		name: "test_workflow".to_string(),
+		id: "workflow_id".to_string(),
+		import: "".to_string(),
+		attr: "print_querent".to_string(),
+		code: Some(CODE_CONFIG.to_string()),
+		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
+		config: Some(config),
+	};
+
+	// Create a WorkflowManager and add the Workflow
+	let workflow_manager = WorkflowManager::new().expect("Failed to create WorkflowManager");
+	assert!(workflow_manager.add_workflow(workflow).is_ok());
+
+	// Start the workflows
+	match workflow_manager.start_workflows().await {
+		Ok(_) => assert!(true),
+		Err(e) => panic!("Error starting workflows: {}", e),
+	}
+
 	Ok(())
 }
