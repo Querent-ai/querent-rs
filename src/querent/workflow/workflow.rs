@@ -1,4 +1,5 @@
 use crate::{
+	callbacks::{EventCallbackInterface, PyEventCallbackInterface},
 	config::Config,
 	cross::{CLRepr, CLReprPython},
 	querent::{py_runtime, PyRuntime, QuerentError},
@@ -20,6 +21,7 @@ pub struct Workflow {
 	pub code: Option<String>,
 	pub arguments: Vec<CLRepr>,
 	pub config: Option<Config>,
+	pub event_callback: Option<PyEventCallbackInterface>,
 }
 
 /// Manages workflows and their execution.

@@ -6,6 +6,7 @@ pub trait EventCallbackInterface {
 	fn handle_event(&mut self, event_type: EventType, event_data: EventState);
 }
 
+#[derive(Clone, Debug)]
 #[pyclass]
 pub struct PyEventCallbackInterface {}
 

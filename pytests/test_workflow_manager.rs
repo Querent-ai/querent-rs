@@ -34,6 +34,7 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 		arguments: args,
 		code: None,
 		config: None,
+		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
@@ -62,6 +63,7 @@ async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
 		arguments: args1,
 		code: None,
 		config: None,
+		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow1).is_ok());
 
@@ -75,6 +77,7 @@ async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
 		arguments: args2,
 		code: None,
 		config: None,
+		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow2).is_ok());
 
@@ -113,6 +116,7 @@ async fn workflow_manager_python_tests() -> pyo3::PyResult<()> {
 		arguments: args,
 		code: Some(_CODE.to_string()),
 		config: None,
+		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
@@ -150,6 +154,7 @@ async fn workflow_manager_python_test_with_result() -> pyo3::PyResult<()> {
 		arguments: args,
 		code: Some(CODE_WITH_RESULT.to_string()),
 		config: None,
+		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 
@@ -198,6 +203,7 @@ async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
 		code: Some(CODE_CONFIG.to_string()),
 		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
 		config: Some(config),
+		event_callback: None,
 	};
 
 	// Create a WorkflowManager and add the Workflow
