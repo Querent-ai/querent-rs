@@ -30,6 +30,7 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 		attr: "sleep".to_string(),
 		arguments: args,
 		code: None,
+		config: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
@@ -57,6 +58,7 @@ async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
 		attr: "sleep".to_string(),
 		arguments: args1,
 		code: None,
+		config: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow1).is_ok());
 
@@ -69,6 +71,7 @@ async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
 		attr: "sleep".to_string(),
 		arguments: args2,
 		code: None,
+		config: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow2).is_ok());
 
@@ -106,6 +109,7 @@ async fn workflow_manager_python_tests() -> pyo3::PyResult<()> {
 		attr: "print_querent".to_string(),
 		arguments: args,
 		code: Some(_CODE.to_string()),
+		config: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
@@ -142,6 +146,7 @@ async fn workflow_manager_python_test_with_result() -> pyo3::PyResult<()> {
 		attr: "add_numbers".to_string(),
 		arguments: args,
 		code: Some(CODE_WITH_RESULT.to_string()),
+		config: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 

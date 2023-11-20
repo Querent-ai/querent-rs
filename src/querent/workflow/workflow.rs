@@ -19,6 +19,7 @@ pub struct Workflow {
 	pub attr: String,
 	pub code: Option<String>,
 	pub arguments: Vec<CLRepr>,
+	pub config: Option<Config>,
 }
 
 /// Manages workflows and their execution.
