@@ -77,7 +77,7 @@ impl PyRuntime {
 			}
 
 			if let Some(config) = config {
-				args_tuple.push(config.into_py(py));
+				args_tuple.push(config.to_object(py));
 			}
 
 			let args = PyTuple::new(py, args_tuple);
