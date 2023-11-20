@@ -55,7 +55,6 @@ impl WorkflowManager {
 	/// Starts a workflow by executing its Python code asynchronously.
 	pub async fn start_workflows(&self) -> Result<(), QuerentError> {
 		let workflows = self.get_workflows();
-		let _tokio = tokio_runtime().map_err(|e| QuerentError::internal(e.to_string()))?;
 		let handles: Vec<_> = workflows
 			.iter()
 			.map(|_workflow| {
@@ -79,7 +78,7 @@ impl WorkflowManager {
 						})?;
 
 						let call_future = self.runtime.call_async(querent_py_fun, args);
-						Ok(_tokio.spawn(call_future))
+						Ok(call_future)
 					}),
 					Some(code) => {
 						let module_file: String = _workflow.id.clone() + ".py";
@@ -110,7 +109,7 @@ impl WorkflowManager {
 								})?;
 
 							let call_future = self.runtime.call_async(querent_py_fun, args);
-							Ok(_tokio.spawn(call_future))
+							Ok(call_future)
 						})
 					},
 				};
