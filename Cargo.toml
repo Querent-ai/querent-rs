@@ -1,5 +1,6 @@
 [package]
 name = "querent-rs"
+description = "A rust bridge capable to handling and executing querent workflows and be able to respond to incoming events via callbacks"
 edition = "2021"
 homepage = "https://querent.xyz"
 license = "Apache-2.0"
