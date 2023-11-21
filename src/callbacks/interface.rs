@@ -7,24 +7,35 @@ pub trait EventCallbackInterface {
 }
 
 #[derive(Clone, Debug)]
+pub struct EventHandler {}
+
+impl EventHandler {
+	pub fn new() -> Self {
+		EventHandler {}
+	}
+}
+
+#[derive(Clone, Debug)]
 #[pyclass]
-pub struct PyEventCallbackInterface {}
+pub struct PyEventCallbackInterface {
+	event_handler: EventHandler,
+}
 
 #[pymethods]
 impl PyEventCallbackInterface {
 	#[new]
 	pub fn new() -> Self {
-		PyEventCallbackInterface {}
+		PyEventCallbackInterface { event_handler: EventHandler::new() }
 	}
 
 	fn handle_event(&mut self, event_type: EventType, event_data: EventState) {
-		println!("Event: {:?}, {:?}", event_type, event_data);
-		println!("TODO: handle different event types")
+		self.event_handler.handle_event(event_type, event_data);
 	}
 }
 
-impl EventCallbackInterface for PyEventCallbackInterface {
+impl EventCallbackInterface for EventHandler {
 	fn handle_event(&mut self, event_type: EventType, event_data: EventState) {
-		PyEventCallbackInterface::handle_event(self, event_type, event_data)
+		println!("Event: {:?}, {:?}", event_type, event_data);
+		println!("TODO: handle different event types")
 	}
 }

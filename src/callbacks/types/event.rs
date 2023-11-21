@@ -1,6 +1,6 @@
 use pyo3::{exceptions::PyTypeError, prelude::*};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum EventType {
 	ContextualGraphUpdated,
 	SemanticGraphUpdated,
@@ -22,7 +22,7 @@ impl<'a> FromPyObject<'a> for EventType {
 	}
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EventState {
 	pub event_type: EventType,
 	pub timestamp: f64,

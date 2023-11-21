@@ -3,7 +3,7 @@ name = "querent-rs"
 edition = "2021"
 homepage = "https://querent.xyz"
 license = "Apache-2.0"
-publish = false
+publish = true
 repository = "https://github.com/querent-ai/querent-rs"
 version = "0.0.1"
 
