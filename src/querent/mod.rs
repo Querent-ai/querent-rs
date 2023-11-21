@@ -3,3 +3,4 @@ pub mod errors;
 pub use errors::*;
 pub mod workflow;
 pub use workflow::*;
+pub use workflow_builder::*;
