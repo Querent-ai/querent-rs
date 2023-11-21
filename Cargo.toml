@@ -1,12 +1,12 @@
 [package]
 name = "querent-rs"
-description = "A rust bridge capable to handling and executing querent workflows and be able to respond to incoming events via callbacks"
+description = "A rust bridge capable of handling and executing querent workflows and be able to respond to incoming events via callbacks"
 edition = "2021"
 homepage = "https://querent.xyz"
 license = "Apache-2.0"
 publish = true
 repository = "https://github.com/querent-ai/querent-rs"
-version = "0.0.1"
+version = "0.1.0"
 
 [lib]
 name = "querent_rs"
