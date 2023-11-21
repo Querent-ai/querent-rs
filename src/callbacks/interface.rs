@@ -13,12 +13,18 @@ pub struct PyEventCallbackInterface {}
 #[pymethods]
 impl PyEventCallbackInterface {
 	#[new]
-	fn new() -> Self {
+	pub fn new() -> Self {
 		PyEventCallbackInterface {}
 	}
 
 	fn handle_event(&mut self, event_type: EventType, event_data: EventState) {
 		println!("Event: {:?}, {:?}", event_type, event_data);
 		println!("TODO: handle different event types")
+	}
+}
+
+impl EventCallbackInterface for PyEventCallbackInterface {
+	fn handle_event(&mut self, event_type: EventType, event_data: EventState) {
+		PyEventCallbackInterface::handle_event(self, event_type, event_data)
 	}
 }

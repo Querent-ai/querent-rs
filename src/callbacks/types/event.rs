@@ -31,9 +31,9 @@ pub struct EventState {
 
 impl<'a> FromPyObject<'a> for EventState {
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
-		let event_type = ob.getattr("event_type")?.extract()?;
-		let timestamp = ob.getattr("timestamp")?.extract()?;
-		let payload = ob.getattr("payload")?;
-		Ok(EventState { event_type, timestamp, payload: payload.to_string() })
+		let event_type = ob.get_item("event_type")?.extract()?;
+		let timestamp = ob.get_item("timestamp")?.extract()?;
+		let payload = ob.get_item("payload")?.extract()?;
+		Ok(EventState { event_type, timestamp, payload })
 	}
 }

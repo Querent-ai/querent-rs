@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use querent_rs::{
+	callbacks::PyEventCallbackInterface,
 	config::{config::WorkflowConfig, Config},
 	cross::{CLRepr, StringType},
 	querent::workflow::{Workflow, WorkflowManager},
@@ -204,6 +205,49 @@ async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
 		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
 		config: Some(config),
 		event_callback: None,
+	};
+
+	// Create a WorkflowManager and add the Workflow
+	let workflow_manager = WorkflowManager::new().expect("Failed to create WorkflowManager");
+	assert!(workflow_manager.add_workflow(workflow).is_ok());
+
+	// Start the workflows
+	match workflow_manager.start_workflows().await {
+		Ok(_) => assert!(true),
+		Err(e) => panic!("Error starting workflows: {}", e),
+	}
+
+	Ok(())
+}
+
+const CODE_WITH_CALLBACK: &str = r#"
+import asyncio
+
+async def print_querent(text: str, callback):
+    """Prints the provided text and sends supported event_type and event_data"""
+    print(text)
+    if callback is not None:
+        event_type = "chat_completed"  # Replace with the desired event type
+        event_data = {
+            "event_type": event_type,
+            "timestamp": 123.45,  # Replace with the actual timestamp
+            "payload": "your_payload_data"  # Replace with the actual payload data
+        }
+        callback.handle_event(event_type, event_data)
+"#;
+
+#[pyo3_asyncio::tokio::test]
+async fn workflow_manager_python_tests_with_callback() -> pyo3::PyResult<()> {
+	// Create a sample Workflow
+	let workflow = Workflow {
+		name: "test_workflow".to_string(),
+		id: "workflow_id".to_string(),
+		import: "".to_string(),
+		attr: "print_querent".to_string(),
+		code: Some(CODE_WITH_CALLBACK.to_string()),
+		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
+		config: None,
+		event_callback: Some(PyEventCallbackInterface::new()),
 	};
 
 	// Create a WorkflowManager and add the Workflow

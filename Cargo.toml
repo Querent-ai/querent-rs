@@ -5,7 +5,7 @@ homepage = "https://querent.xyz"
 license = "Apache-2.0"
 publish = false
 repository = "https://github.com/querent-ai/querent-rs"
-version = "1.0.0"
+version = "0.0.1"
 
 [lib]
 name = "querent_rs"
