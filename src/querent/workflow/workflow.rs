@@ -80,8 +80,12 @@ impl WorkflowManager {
 							QuerentError::internal(e.to_string())
 						})?;
 
-						let call_future =
-							self.runtime.call_async(querent_py_fun, args, _workflow.config.clone());
+						let call_future = self.runtime.call_async(
+							querent_py_fun,
+							args,
+							_workflow.config.clone(),
+							_workflow.event_callback.clone(),
+						);
 						Ok(call_future)
 					}),
 					Some(code) => {
@@ -116,6 +120,7 @@ impl WorkflowManager {
 								querent_py_fun,
 								args,
 								_workflow.config.clone(),
+								_workflow.event_callback.clone(),
 							);
 							Ok(call_future)
 						})
