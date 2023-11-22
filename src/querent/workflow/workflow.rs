@@ -14,19 +14,29 @@ use tokio::runtime::Runtime;
 /// Represents a workflow.
 #[derive(Debug, Clone)]
 pub struct Workflow {
+	/// Name of the workflow.
 	pub name: String,
+	/// Unique identifier for the workflow.
 	pub id: String,
+	/// Python module to import for the workflow.
 	pub import: String,
+	/// Attribute of the Python module containing the start function.
 	pub attr: String,
+	/// Optional Python code to execute instead of importing a module.
 	pub code: Option<String>,
+	/// Arguments to pass to the workflow's start function.
 	pub arguments: Vec<CLRepr>,
+	/// Optional configuration for the workflow.
 	pub config: Option<Config>,
+	/// Optional callback for handling workflow events.
 	pub event_callback: Option<PyEventCallbackInterface>,
 }
 
 /// Manages workflows and their execution.
 pub struct WorkflowManager {
+	/// Mutex-protected map of workflows, keyed by their unique identifier.
 	pub workflows: Mutex<HashMap<String, Workflow>>,
+	/// Reference to the Python runtime.
 	pub runtime: &'static PyRuntime,
 }
 
@@ -55,7 +65,7 @@ impl WorkflowManager {
 		workflows.values().cloned().collect()
 	}
 
-	/// Starts a workflow by executing its Python code asynchronously.
+	/// Starts workflows by executing their Python code asynchronously.
 	pub async fn start_workflows(&self) -> Result<(), QuerentError> {
 		let workflows = self.get_workflows();
 		let handles: Vec<_> = workflows
@@ -149,11 +159,12 @@ impl WorkflowManager {
 }
 
 impl Drop for WorkflowManager {
+	/// Drops the `WorkflowManager` instance, cleaning up resources.
 	fn drop(&mut self) {
 		log::info!("Dropping WorkflowManager");
 		let _ = self.runtime;
 
-		// cleanup the Python runtime
+		// Cleanup the Python runtime
 		Python::with_gil(|py| {
 			if let Err(e) = py
 				.import("sys")

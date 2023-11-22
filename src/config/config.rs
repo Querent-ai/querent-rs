@@ -2,19 +2,28 @@ use std::collections::HashMap;
 
 use pyo3::{prelude::*, types::PyDict, PyObject, ToPyObject};
 
+/// Configuration struct representing the overall setup for a system.
 #[derive(Debug, Clone)]
 #[pyclass]
 pub struct Config {
+	/// Version of the configuration format.
 	pub version: f32,
+	/// Unique identifier for the querent (user/client).
 	pub querent_id: String,
+	/// Name of the querent.
 	pub querent_name: String,
+	/// Configuration for the workflow.
 	pub workflow: WorkflowConfig,
+	/// List of collector configurations.
 	pub collectors: Vec<CollectorConfig>,
+	/// List of engine configurations.
 	pub engines: Vec<EngineConfig>,
+	/// Optional resource configuration.
 	pub resource: Option<ResourceConfig>,
 }
 
 impl Default for Config {
+	/// Creates a default configuration.
 	fn default() -> Self {
 		Config {
 			version: 0.1,
@@ -32,14 +41,20 @@ impl Default for Config {
 	}
 }
 
+/// Configuration for a workflow.
 #[derive(Debug, Clone)]
 pub struct WorkflowConfig {
+	/// Name of the workflow.
 	pub name: String,
+	/// Unique identifier for the workflow.
 	pub id: String,
+	/// Additional configuration options for the workflow.
 	pub config: HashMap<String, String>,
 }
 
+// Implementation of conversion traits for WorkflowConfig.
 impl<'a> FromPyObject<'a> for WorkflowConfig {
+	/// Extracts a WorkflowConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		let name = ob.getattr("name")?.extract()?;
 		let id = ob.getattr("id")?.extract()?;
@@ -49,6 +64,7 @@ impl<'a> FromPyObject<'a> for WorkflowConfig {
 }
 
 impl ToPyObject for WorkflowConfig {
+	/// Converts a WorkflowConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let workflow_dict = PyDict::new(py);
 		workflow_dict.set_item("name", &self.name).unwrap();
@@ -59,14 +75,20 @@ impl ToPyObject for WorkflowConfig {
 	}
 }
 
+/// Configuration for a collector.
 #[derive(Debug, Clone)]
 pub struct CollectorConfig {
-	name: String,
-	backend: String,
-	config: HashMap<String, String>,
+	/// Name of the collector.
+	pub name: String,
+	/// Backend used by the collector.
+	pub backend: String,
+	/// Additional configuration options for the collector.
+	pub config: HashMap<String, String>,
 }
 
+// Implementation of conversion traits for CollectorConfig.
 impl<'a> FromPyObject<'a> for CollectorConfig {
+	/// Extracts a CollectorConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		let name = ob.getattr("name")?.extract()?;
 		let backend = ob.getattr("backend")?.extract()?;
@@ -76,6 +98,7 @@ impl<'a> FromPyObject<'a> for CollectorConfig {
 }
 
 impl ToPyObject for CollectorConfig {
+	/// Converts a CollectorConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let collector_dict = PyDict::new(py);
 		collector_dict.set_item("name", &self.name).unwrap();
@@ -86,17 +109,26 @@ impl ToPyObject for CollectorConfig {
 	}
 }
 
+/// Configuration for an engine.
 #[derive(Debug, Clone)]
 pub struct EngineConfig {
-	name: String,
-	num_workers: Option<u32>,
-	max_retries: Option<u32>,
-	retry_interval: Option<u32>,
-	message_throttle_limit: Option<u32>,
-	message_throttle_delay: Option<u32>,
+	/// Name of the engine.
+	pub name: String,
+	/// Number of workers used by the engine (optional).
+	pub num_workers: Option<u32>,
+	/// Maximum number of retries for the engine (optional).
+	pub max_retries: Option<u32>,
+	/// Interval between retries for the engine (optional).
+	pub retry_interval: Option<u32>,
+	/// Message throttle limit for the engine (optional).
+	pub message_throttle_limit: Option<u32>,
+	/// Message throttle delay for the engine (optional).
+	pub message_throttle_delay: Option<u32>,
 }
 
+// Implementation of conversion traits for EngineConfig.
 impl<'a> FromPyObject<'a> for EngineConfig {
+	/// Extracts an EngineConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		let name = ob.getattr("name")?.extract()?;
 		let num_workers = ob.getattr("num_workers")?.extract()?;
@@ -116,6 +148,7 @@ impl<'a> FromPyObject<'a> for EngineConfig {
 }
 
 impl ToPyObject for EngineConfig {
+	/// Converts an EngineConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let engine_dict = PyDict::new(py);
 		engine_dict.set_item("name", &self.name).unwrap();
@@ -133,15 +166,22 @@ impl ToPyObject for EngineConfig {
 	}
 }
 
+/// Configuration for resource constraints.
 #[derive(Debug, Clone)]
 pub struct ResourceConfig {
-	max_workers_allowed: Option<u32>,
-	max_workers_per_collector: Option<u32>,
-	max_workers_per_engine: Option<u32>,
-	max_workers_per_querent: Option<u32>,
+	/// Maximum number of workers allowed (optional).
+	pub max_workers_allowed: Option<u32>,
+	/// Maximum number of workers per collector (optional).
+	pub max_workers_per_collector: Option<u32>,
+	/// Maximum number of workers per engine (optional).
+	pub max_workers_per_engine: Option<u32>,
+	/// Maximum number of workers per querent (optional).
+	pub max_workers_per_querent: Option<u32>,
 }
 
+// Implementation of conversion traits for ResourceConfig.
 impl<'a> FromPyObject<'a> for ResourceConfig {
+	/// Extracts a ResourceConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		let max_workers_allowed = ob.getattr("max_workers_allowed")?.extract()?;
 		let max_workers_per_collector = ob.getattr("max_workers_per_collector")?.extract()?;
@@ -157,6 +197,7 @@ impl<'a> FromPyObject<'a> for ResourceConfig {
 }
 
 impl ToPyObject for ResourceConfig {
+	/// Converts a ResourceConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let resource_dict = PyDict::new(py);
 		resource_dict
@@ -178,6 +219,7 @@ impl ToPyObject for ResourceConfig {
 
 #[pymethods]
 impl Config {
+	/// Constructor for creating a new Config instance.
 	#[new]
 	fn new(
 		version: f32,
@@ -193,6 +235,7 @@ impl Config {
 }
 
 impl ToPyObject for Config {
+	/// Converts a Config to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let config_dict = PyDict::new(py);
 		config_dict.set_item("version", self.version).unwrap();
