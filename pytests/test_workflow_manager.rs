@@ -231,7 +231,7 @@ async def print_querent(text: str, callback):
         event_data = {
             "event_type": event_type,
             "timestamp": 123.45,  # Replace with the actual timestamp
-            "payload": "your_payload_data"  # Replace with the actual payload data
+            "payload": "🚀"  # Replace with the actual payload data
         }
         callback.handle_event(event_type, event_data)
 "#;
