@@ -49,6 +49,6 @@ impl EventCallbackInterface for EventHandler {
 	fn handle_event(&mut self, event_type: EventType, event_data: EventState) {
 		// Print basic information about the event (TODO: Handle different event types)
 		println!("Event: {:?}, {:?}", event_type, event_data);
-		println!("TODO: handle different event types");
+		println!("TODO: handle different event types: Event coming from python");
 	}
 }
