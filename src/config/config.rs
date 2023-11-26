@@ -78,6 +78,8 @@ impl ToPyObject for WorkflowConfig {
 /// Configuration for a collector.
 #[derive(Debug, Clone)]
 pub struct CollectorConfig {
+	/// Unique identifier for the collector.
+	pub id: String,
 	/// Name of the collector.
 	pub name: String,
 	/// Backend used by the collector.
@@ -90,10 +92,11 @@ pub struct CollectorConfig {
 impl<'a> FromPyObject<'a> for CollectorConfig {
 	/// Extracts a CollectorConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
+		let id = ob.getattr("id")?.extract()?;
 		let name = ob.getattr("name")?.extract()?;
 		let backend = ob.getattr("backend")?.extract()?;
 		let config = ob.getattr("config")?.extract()?;
-		Ok(CollectorConfig { name, backend, config })
+		Ok(CollectorConfig { id, name, backend, config })
 	}
 }
 
@@ -101,6 +104,7 @@ impl ToPyObject for CollectorConfig {
 	/// Converts a CollectorConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let collector_dict = PyDict::new(py);
+		collector_dict.set_item("id", &self.id).unwrap();
 		collector_dict.set_item("name", &self.name).unwrap();
 		collector_dict.set_item("backend", &self.backend).unwrap();
 		collector_dict.set_item("config", &self.config).unwrap();
@@ -112,6 +116,8 @@ impl ToPyObject for CollectorConfig {
 /// Configuration for an engine.
 #[derive(Debug, Clone)]
 pub struct EngineConfig {
+	/// Unique identifier for the engine.
+	pub id: String,
 	/// Name of the engine.
 	pub name: String,
 	/// Number of workers used by the engine (optional).
@@ -130,6 +136,7 @@ pub struct EngineConfig {
 impl<'a> FromPyObject<'a> for EngineConfig {
 	/// Extracts an EngineConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
+		let id = ob.getattr("id")?.extract()?;
 		let name = ob.getattr("name")?.extract()?;
 		let num_workers = ob.getattr("num_workers")?.extract()?;
 		let max_retries = ob.getattr("max_retries")?.extract()?;
@@ -137,6 +144,7 @@ impl<'a> FromPyObject<'a> for EngineConfig {
 		let message_throttle_limit = ob.getattr("message_throttle_limit")?.extract()?;
 		let message_throttle_delay = ob.getattr("message_throttle_delay")?.extract()?;
 		Ok(EngineConfig {
+			id,
 			name,
 			num_workers,
 			max_retries,
@@ -151,6 +159,7 @@ impl ToPyObject for EngineConfig {
 	/// Converts an EngineConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let engine_dict = PyDict::new(py);
+		engine_dict.set_item("id", &self.id).unwrap();
 		engine_dict.set_item("name", &self.name).unwrap();
 		engine_dict.set_item("num_workers", &self.num_workers).unwrap();
 		engine_dict.set_item("max_retries", &self.max_retries).unwrap();
@@ -169,6 +178,8 @@ impl ToPyObject for EngineConfig {
 /// Configuration for resource constraints.
 #[derive(Debug, Clone)]
 pub struct ResourceConfig {
+	/// Unique identifier for the resource.
+	pub id: String,
 	/// Maximum number of workers allowed (optional).
 	pub max_workers_allowed: Option<u32>,
 	/// Maximum number of workers per collector (optional).
@@ -183,11 +194,13 @@ pub struct ResourceConfig {
 impl<'a> FromPyObject<'a> for ResourceConfig {
 	/// Extracts a ResourceConfig from a Python object.
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
+		let id = ob.getattr("id")?.extract()?;
 		let max_workers_allowed = ob.getattr("max_workers_allowed")?.extract()?;
 		let max_workers_per_collector = ob.getattr("max_workers_per_collector")?.extract()?;
 		let max_workers_per_engine = ob.getattr("max_workers_per_engine")?.extract()?;
 		let max_workers_per_querent = ob.getattr("max_workers_per_querent")?.extract()?;
 		Ok(ResourceConfig {
+			id,
 			max_workers_allowed,
 			max_workers_per_collector,
 			max_workers_per_engine,
@@ -200,6 +213,7 @@ impl ToPyObject for ResourceConfig {
 	/// Converts a ResourceConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let resource_dict = PyDict::new(py);
+		resource_dict.set_item("id", &self.id).unwrap();
 		resource_dict
 			.set_item("max_workers_allowed", &self.max_workers_allowed)
 			.unwrap();
