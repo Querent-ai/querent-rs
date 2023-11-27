@@ -1,5 +1,9 @@
 // Import necessary items from the pyo3 crate
-use pyo3::{exceptions::PyTypeError, prelude::*};
+use pyo3::{
+	exceptions::PyTypeError,
+	prelude::*,
+	types::{PyDict, PyString},
+};
 
 // Define an enumeration for different event types
 #[derive(Clone, Debug, PartialEq)]
@@ -13,7 +17,7 @@ pub enum MessageType {
 	Metrics,
 }
 
-// Implement conversion from Python object to EventType
+// Implement conversion from Python object to MessageType
 impl<'a> FromPyObject<'a> for MessageType {
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		// Try to extract a string from the Python object
@@ -37,6 +41,16 @@ impl<'a> FromPyObject<'a> for MessageType {
 	}
 }
 
+// Implement conversion from MessageType to Python object\
+impl IntoPy<PyObject> for MessageType {
+	fn into_py(self, py: Python) -> PyObject {
+		// Create a new Python string
+		let string = PyString::new(py, &format!("{:?}", self));
+		// Return the string
+		string.into()
+	}
+}
+
 // Define a structure to represent the state of an event
 #[derive(Clone, Debug, PartialEq)]
 pub struct MessageState {
@@ -54,5 +68,19 @@ impl<'a> FromPyObject<'a> for MessageState {
 		let payload = ob.get_item("payload")?.extract()?;
 		// Create and return an MessageState instance
 		Ok(MessageState { message_type, timestamp, payload })
+	}
+}
+
+// Implement conversion from MessageState to Python object
+impl IntoPy<PyObject> for MessageState {
+	fn into_py(self, py: Python) -> PyObject {
+		// Create a new Python dictionary
+		let dict = PyDict::new(py);
+		// Insert the message_type, timestamp, and payload into the dictionary
+		dict.set_item("message_type", self.message_type.into_py(py)).unwrap();
+		dict.set_item("timestamp", self.timestamp).unwrap();
+		dict.set_item("payload", self.payload).unwrap();
+		// Return the dictionary
+		dict.into()
 	}
 }
