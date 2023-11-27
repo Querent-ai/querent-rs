@@ -11,13 +11,13 @@ use querent::errors::QuerentError;
 use tokio::runtime::{Builder, Runtime};
 
 pub mod callbacks;
+pub mod comm;
 pub mod config;
 pub mod cross;
 pub mod querent;
-pub mod util;
-
 #[cfg(test)]
 mod tests;
+pub mod util;
 
 pub fn tokio_runtime() -> Result<&'static Runtime, QuerentError> {
 	static RUNTIME: OnceCell<Runtime> = OnceCell::new();
