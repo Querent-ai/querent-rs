@@ -20,7 +20,6 @@ pub struct PyAsyncFun {
 	args: Vec<CLRepr>,
 	callback: PyAsyncCallback,
 	config: Option<Config>,
-	event_callback: Option<PyEventCallbackInterface>,
 }
 
 pub enum PyAsyncCallback {
@@ -36,16 +35,8 @@ impl std::fmt::Debug for PyAsyncCallback {
 }
 
 impl PyAsyncFun {
-	pub fn split(
-		self,
-	) -> (
-		Py<PyFunction>,
-		Vec<CLRepr>,
-		PyAsyncCallback,
-		Option<Config>,
-		Option<PyEventCallbackInterface>,
-	) {
-		(self.fun, self.args, self.callback, self.config, self.event_callback)
+	pub fn split(self) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback, Option<Config>) {
+		(self.fun, self.args, self.callback, self.config)
 	}
 }
 
@@ -63,18 +54,11 @@ impl PyRuntime {
 		fun: Py<PyFunction>,
 		args: Vec<CLRepr>,
 		config: Option<Config>,
-		event_callback: Option<PyEventCallbackInterface>,
 	) -> Result<CLRepr, QuerentError> {
 		let (rx, tx) = oneshot::channel();
 
 		self.sender
-			.send(PyAsyncFun {
-				fun,
-				args,
-				callback: PyAsyncCallback::Channel(rx),
-				config,
-				event_callback,
-			})
+			.send(PyAsyncFun { fun, args, callback: PyAsyncCallback::Channel(rx), config })
 			.await
 			.map_err(|err| {
 				QuerentError::internal(format!("Unable to schedule python function call: {}", err))
@@ -84,25 +68,18 @@ impl PyRuntime {
 	}
 
 	fn process_coroutines(task: PyAsyncFun) -> Result<(), QuerentError> {
-		let (fun, args, callback, config, event_callback) = task.split();
+		let (fun, args, callback, config) = task.split();
 
 		let task_result = Python::with_gil(move |py| -> PyResult<PyAsyncFunResult> {
 			let mut args_tuple = Vec::with_capacity(args.len());
-
-			for arg in args {
-				args_tuple.push(arg.into_py(py)?);
-			}
 
 			if let Some(config) = config {
 				args_tuple.push(config.to_object(py));
 			}
 
-			if let Some(event_callback) = event_callback {
-				let callback_class: PyObject =
-					Py::new(py, event_callback).expect("Unable to create class").into_py(py);
-				args_tuple.push(callback_class);
+			for arg in args {
+				args_tuple.push(arg.into_py(py)?);
 			}
-
 			let args = PyTuple::new(py, args_tuple);
 			let call_res = fun.call1(py, args)?;
 			let fut = pyo3_asyncio::tokio::into_future(call_res.as_ref(py))?;
@@ -213,10 +190,9 @@ pub fn call_async(
 	fun: Py<PyFunction>,
 	args: Vec<CLRepr>,
 	config: Option<Config>,
-	event_callback: Option<PyEventCallbackInterface>,
 ) -> Result<impl Future<Output = Result<CLRepr, QuerentError>>, QuerentError> {
 	let runtime = py_runtime()?;
-	Ok(runtime.call_async(fun, args, config, event_callback))
+	Ok(runtime.call_async(fun, args, config))
 }
 
 pub fn py_runtime_init() -> Result<(), QuerentError> {

@@ -1,5 +1,6 @@
 use crate::{
 	callbacks::{EventCallbackInterface, PyEventCallbackInterface},
+	comm::ChannelHandler,
 	config::Config,
 	cross::{CLRepr, CLReprPython},
 	querent::{py_runtime, PyRuntime, QuerentError},
@@ -13,6 +14,7 @@ use tokio::runtime::Runtime;
 
 /// Represents a workflow.
 #[derive(Debug, Clone)]
+#[pyclass]
 pub struct Workflow {
 	/// Name of the workflow.
 	pub name: String,
@@ -28,8 +30,6 @@ pub struct Workflow {
 	pub arguments: Vec<CLRepr>,
 	/// Optional configuration for the workflow.
 	pub config: Option<Config>,
-	/// Optional callback for handling workflow events.
-	pub event_callback: Option<PyEventCallbackInterface>,
 }
 
 /// Manages workflows and their execution.
@@ -90,12 +90,8 @@ impl WorkflowManager {
 							QuerentError::internal(e.to_string())
 						})?;
 
-						let call_future = self.runtime.call_async(
-							querent_py_fun,
-							args,
-							_workflow.config.clone(),
-							_workflow.event_callback.clone(),
-						);
+						let call_future =
+							self.runtime.call_async(querent_py_fun, args, _workflow.config.clone());
 						Ok(call_future)
 					}),
 					Some(code) => {
@@ -130,7 +126,6 @@ impl WorkflowManager {
 								querent_py_fun,
 								args,
 								_workflow.config.clone(),
-								_workflow.event_callback.clone(),
 							);
 							Ok(call_future)
 						})

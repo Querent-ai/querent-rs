@@ -1,6 +1,4 @@
-// Import necessary items from the callbacks module
 use crate::comm::types::message::{MessageState, MessageType};
-// Import necessary items from the pyo3 crate
 use pyo3::prelude::*;
 
 // Define the base interface for event callbacks
@@ -20,6 +18,7 @@ pub trait ChannelInterface {
 
 // Define a basic event handler struct
 #[derive(Clone, Debug)]
+#[pyclass]
 pub struct ChannelHandler {}
 
 impl ChannelHandler {
@@ -42,8 +41,8 @@ pub struct PyMessageInterface {
 impl PyMessageInterface {
 	// Python constructor for PyMessageInterface
 	#[new]
-	pub fn new() -> Self {
-		PyMessageInterface { channel_handler: ChannelHandler::new() }
+	pub fn new(channel: ChannelHandler) -> Self {
+		PyMessageInterface { channel_handler: channel }
 	}
 
 	// Python method to handle messages

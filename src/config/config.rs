@@ -2,6 +2,11 @@ use std::collections::HashMap;
 
 use pyo3::{prelude::*, types::PyDict, PyObject, ToPyObject};
 
+use crate::{
+	callbacks::interface::EventHandler,
+	comm::{ChannelHandler, PyMessageInterface},
+};
+
 /// Configuration struct representing the overall setup for a system.
 #[derive(Debug, Clone)]
 #[pyclass]
@@ -22,6 +27,22 @@ pub struct Config {
 	pub resource: Option<ResourceConfig>,
 }
 
+impl ToPyObject for Config {
+	/// Converts a Config to a Python object.
+	fn to_object(&self, py: Python) -> PyObject {
+		let config_dict = PyDict::new(py);
+		config_dict.set_item("version", self.version).unwrap();
+		config_dict.set_item("querent_id", &self.querent_id).unwrap();
+		config_dict.set_item("querent_name", &self.querent_name).unwrap();
+		config_dict.set_item("workflow", &self.workflow).unwrap();
+		config_dict.set_item("collectors", &self.collectors).unwrap();
+		config_dict.set_item("engines", &self.engines).unwrap();
+		config_dict.set_item("resource", &self.resource).unwrap();
+
+		config_dict.to_object(py)
+	}
+}
+
 impl Default for Config {
 	/// Creates a default configuration.
 	fn default() -> Self {
@@ -33,6 +54,10 @@ impl Default for Config {
 				name: "workflow".to_string(),
 				id: "workflow".to_string(),
 				config: HashMap::new(),
+				inner_channel: ChannelHandler::new(),
+				channel: None,
+				inner_event_handler: EventHandler::new(),
+				event_handler: None,
 			},
 			collectors: vec![],
 			engines: vec![],
@@ -43,6 +68,7 @@ impl Default for Config {
 
 /// Configuration for a workflow.
 #[derive(Debug, Clone)]
+#[pyclass]
 pub struct WorkflowConfig {
 	/// Name of the workflow.
 	pub name: String,
@@ -50,17 +76,17 @@ pub struct WorkflowConfig {
 	pub id: String,
 	/// Additional configuration options for the workflow.
 	pub config: HashMap<String, String>,
-}
-
-// Implementation of conversion traits for WorkflowConfig.
-impl<'a> FromPyObject<'a> for WorkflowConfig {
-	/// Extracts a WorkflowConfig from a Python object.
-	fn extract(ob: &'a PyAny) -> PyResult<Self> {
-		let name = ob.getattr("name")?.extract()?;
-		let id = ob.getattr("id")?.extract()?;
-		let config = ob.getattr("config")?.extract()?;
-		Ok(WorkflowConfig { name, id, config })
-	}
+	/// Internal channel handler in rust will be wrapped and marshalled into python.
+	pub inner_channel: ChannelHandler,
+	/// PyObject for the channel handler.
+	/// This is a workaround for the fact that PyMessageInterface is not a PyObject.
+	#[pyo3(get, set)]
+	pub channel: Option<PyObject>,
+	/// Inner EventHandler for workflow to get events from python
+	pub inner_event_handler: EventHandler,
+	/// PyObject for the event handler.
+	#[pyo3(get, set)]
+	pub event_handler: Option<PyObject>,
 }
 
 impl ToPyObject for WorkflowConfig {
@@ -70,6 +96,11 @@ impl ToPyObject for WorkflowConfig {
 		workflow_dict.set_item("name", &self.name).unwrap();
 		workflow_dict.set_item("id", &self.id).unwrap();
 		workflow_dict.set_item("config", &self.config).unwrap();
+		// convert channel handler to python object
+		let channel_interface = PyMessageInterface::new(self.inner_channel.clone());
+		let channel: PyObject =
+			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+		workflow_dict.set_item("channel", channel).unwrap();
 
 		workflow_dict.to_object(py)
 	}
@@ -77,6 +108,7 @@ impl ToPyObject for WorkflowConfig {
 
 /// Configuration for a collector.
 #[derive(Debug, Clone)]
+#[pyclass]
 pub struct CollectorConfig {
 	/// Unique identifier for the collector.
 	pub id: String,
@@ -86,18 +118,11 @@ pub struct CollectorConfig {
 	pub backend: String,
 	/// Additional configuration options for the collector.
 	pub config: HashMap<String, String>,
-}
-
-// Implementation of conversion traits for CollectorConfig.
-impl<'a> FromPyObject<'a> for CollectorConfig {
-	/// Extracts a CollectorConfig from a Python object.
-	fn extract(ob: &'a PyAny) -> PyResult<Self> {
-		let id = ob.getattr("id")?.extract()?;
-		let name = ob.getattr("name")?.extract()?;
-		let backend = ob.getattr("backend")?.extract()?;
-		let config = ob.getattr("config")?.extract()?;
-		Ok(CollectorConfig { id, name, backend, config })
-	}
+	/// Internal channel handler in rust will be wrapped and marshalled into python.
+	pub inner_channel: ChannelHandler,
+	/// PyObject for the channel handler.
+	#[pyo3(get, set)]
+	pub channel: Option<PyObject>,
 }
 
 impl ToPyObject for CollectorConfig {
@@ -108,13 +133,18 @@ impl ToPyObject for CollectorConfig {
 		collector_dict.set_item("name", &self.name).unwrap();
 		collector_dict.set_item("backend", &self.backend).unwrap();
 		collector_dict.set_item("config", &self.config).unwrap();
-
+		// convert channel handler to python object
+		let channel_interface = PyMessageInterface::new(self.inner_channel.clone());
+		let channel: PyObject =
+			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+		collector_dict.set_item("channel", channel).unwrap();
 		collector_dict.to_object(py)
 	}
 }
 
 /// Configuration for an engine.
 #[derive(Debug, Clone)]
+#[pyclass]
 pub struct EngineConfig {
 	/// Unique identifier for the engine.
 	pub id: String,
@@ -130,29 +160,11 @@ pub struct EngineConfig {
 	pub message_throttle_limit: Option<u32>,
 	/// Message throttle delay for the engine (optional).
 	pub message_throttle_delay: Option<u32>,
-}
-
-// Implementation of conversion traits for EngineConfig.
-impl<'a> FromPyObject<'a> for EngineConfig {
-	/// Extracts an EngineConfig from a Python object.
-	fn extract(ob: &'a PyAny) -> PyResult<Self> {
-		let id = ob.getattr("id")?.extract()?;
-		let name = ob.getattr("name")?.extract()?;
-		let num_workers = ob.getattr("num_workers")?.extract()?;
-		let max_retries = ob.getattr("max_retries")?.extract()?;
-		let retry_interval = ob.getattr("retry_interval")?.extract()?;
-		let message_throttle_limit = ob.getattr("message_throttle_limit")?.extract()?;
-		let message_throttle_delay = ob.getattr("message_throttle_delay")?.extract()?;
-		Ok(EngineConfig {
-			id,
-			name,
-			num_workers,
-			max_retries,
-			retry_interval,
-			message_throttle_limit,
-			message_throttle_delay,
-		})
-	}
+	/// Internal channel handler in rust will be wrapped and marshalled into python.
+	pub inner_channel: ChannelHandler,
+	/// PyObject for the channel handler.
+	#[pyo3(get, set)]
+	pub channel: Option<PyObject>,
 }
 
 impl ToPyObject for EngineConfig {
@@ -170,6 +182,11 @@ impl ToPyObject for EngineConfig {
 		engine_dict
 			.set_item("message_throttle_delay", &self.message_throttle_delay)
 			.unwrap();
+		// convert channel handler to python object
+		let channel_interface = PyMessageInterface::new(self.inner_channel.clone());
+		let channel: PyObject =
+			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+		engine_dict.set_item("channel", channel).unwrap();
 
 		engine_dict.to_object(py)
 	}
@@ -245,21 +262,5 @@ impl Config {
 		resource: Option<ResourceConfig>,
 	) -> Self {
 		Config { version, querent_id, querent_name, workflow, collectors, engines, resource }
-	}
-}
-
-impl ToPyObject for Config {
-	/// Converts a Config to a Python object.
-	fn to_object(&self, py: Python) -> PyObject {
-		let config_dict = PyDict::new(py);
-		config_dict.set_item("version", self.version).unwrap();
-		config_dict.set_item("querent_id", &self.querent_id).unwrap();
-		config_dict.set_item("querent_name", &self.querent_name).unwrap();
-		config_dict.set_item("workflow", &self.workflow).unwrap();
-		config_dict.set_item("collectors", &self.collectors).unwrap();
-		config_dict.set_item("engines", &self.engines).unwrap();
-		config_dict.set_item("resource", &self.resource).unwrap();
-
-		config_dict.to_object(py)
 	}
 }

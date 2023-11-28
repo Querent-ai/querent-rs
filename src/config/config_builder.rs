@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::{callbacks::interface::EventHandler, comm::ChannelHandler};
+
 use super::{
 	config::{CollectorConfig, EngineConfig, ResourceConfig, WorkflowConfig},
 	Config,
@@ -75,6 +77,10 @@ impl ConfigBuilder {
 				name: "workflow".to_string(),
 				id: "workflow".to_string(),
 				config: HashMap::new(),
+				channel: None,
+				inner_channel: ChannelHandler::new(),
+				inner_event_handler: EventHandler::new(),
+				event_handler: None,
 			}),
 			collectors: self.collectors.unwrap_or_else(Vec::new),
 			engines: self.engines.unwrap_or_else(Vec::new),

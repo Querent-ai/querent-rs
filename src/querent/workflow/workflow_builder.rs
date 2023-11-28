@@ -1,5 +1,6 @@
 use crate::{
 	callbacks::PyEventCallbackInterface,
+	comm::ChannelHandler,
 	config::Config,
 	cross::{CLRepr, StringType},
 };
@@ -15,7 +16,6 @@ pub struct WorkflowBuilder {
 	code: Option<String>,
 	arguments: Vec<CLRepr>,
 	config: Option<Config>,
-	event_callback: Option<PyEventCallbackInterface>,
 }
 
 impl WorkflowBuilder {
@@ -29,7 +29,6 @@ impl WorkflowBuilder {
 			code: None,
 			arguments: Vec::new(),
 			config: None,
-			event_callback: None,
 		}
 	}
 
@@ -69,12 +68,6 @@ impl WorkflowBuilder {
 		self
 	}
 
-	/// Sets the event callback for the workflow.
-	pub fn event_callback(mut self, callback: PyEventCallbackInterface) -> Self {
-		self.event_callback = Some(callback);
-		self
-	}
-
 	/// Builds the `Workflow` using the configured parameters.
 	pub fn build(self) -> Workflow {
 		Workflow {
@@ -85,7 +78,6 @@ impl WorkflowBuilder {
 			code: self.code,
 			arguments: self.arguments,
 			config: self.config,
-			event_callback: self.event_callback,
 		}
 	}
 }

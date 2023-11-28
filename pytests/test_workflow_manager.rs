@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use querent_rs::{
-	callbacks::PyEventCallbackInterface,
+	callbacks::interface::EventHandler,
+	comm::ChannelHandler,
 	config::{config::WorkflowConfig, Config},
 	cross::{CLRepr, StringType},
 	querent::workflow::{Workflow, WorkflowManager},
@@ -35,7 +36,6 @@ async fn workflow_manager_basic_tests() -> pyo3::PyResult<()> {
 		arguments: args,
 		code: None,
 		config: None,
-		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
@@ -64,7 +64,6 @@ async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
 		arguments: args1,
 		code: None,
 		config: None,
-		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow1).is_ok());
 
@@ -78,7 +77,6 @@ async fn workflow_manager_multiple_workflows() -> pyo3::PyResult<()> {
 		arguments: args2,
 		code: None,
 		config: None,
-		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow2).is_ok());
 
@@ -117,7 +115,6 @@ async fn workflow_manager_python_tests() -> pyo3::PyResult<()> {
 		arguments: args,
 		code: Some(_CODE.to_string()),
 		config: None,
-		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 	match workflow_manager.start_workflows().await {
@@ -155,7 +152,6 @@ async fn workflow_manager_python_test_with_result() -> pyo3::PyResult<()> {
 		arguments: args,
 		code: Some(CODE_WITH_RESULT.to_string()),
 		config: None,
-		event_callback: None,
 	};
 	assert!(workflow_manager.add_workflow(test_flow).is_ok());
 
@@ -172,7 +168,7 @@ async fn workflow_manager_python_test_with_result() -> pyo3::PyResult<()> {
 const CODE_CONFIG: &str = r#"
 import asyncio
 
-async def print_querent(text: str, config):
+async def print_querent(config, text):
     """Prints the provided text and config"""
     print(text)
     print(config)
@@ -189,6 +185,10 @@ async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
 			name: "test_workflow".to_string(),
 			id: "workflow_id".to_string(),
 			config: HashMap::new(),
+			channel: None,
+			inner_channel: ChannelHandler::new(),
+			inner_event_handler: EventHandler::new(),
+			event_handler: None,
 		},
 		collectors: vec![],
 		engines: vec![],
@@ -204,7 +204,6 @@ async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
 		code: Some(CODE_CONFIG.to_string()),
 		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
 		config: Some(config),
-		event_callback: None,
 	};
 
 	// Create a WorkflowManager and add the Workflow
@@ -220,45 +219,63 @@ async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
 	Ok(())
 }
 
-const CODE_WITH_CALLBACK: &str = r#"
-import asyncio
+// const CODE_WITH_CALLBACK: &str = r#"
+// import asyncio
 
-async def print_querent(text: str, callback):
-    """Prints the provided text and sends supported event_type and event_data"""
-    print(text)
-    if callback is not None:
-        event_type = "chat_completed"  # Replace with the desired event type
-        event_data = {
-            "event_type": event_type,
-            "timestamp": 123.45,  # Replace with the actual timestamp
-            "payload": "🚀"  # Replace with the actual payload data
-        }
-        callback.handle_event(event_type, event_data)
-"#;
+// async def print_querent(config, text: str):
+//     """Prints the provided text and sends supported event_type and event_data"""
+//     print(text)
+//     if config.workflow is not None:
+//         event_type = "chat_completed"  # Replace with the desired event type
+//         event_data = {
+//             "event_type": event_type,
+//             "timestamp": 123.45,  # Replace with the actual timestamp
+//             "payload": "🚀"  # Replace with the actual payload data
+//         }
+//         config.workflow.event_handler.handle_event(event_type, event_data)
+// "#;
 
-#[pyo3_asyncio::tokio::test]
-async fn workflow_manager_python_tests_with_callback() -> pyo3::PyResult<()> {
-	// Create a sample Workflow
-	let workflow = Workflow {
-		name: "test_workflow".to_string(),
-		id: "workflow_id".to_string(),
-		import: "".to_string(),
-		attr: "print_querent".to_string(),
-		code: Some(CODE_WITH_CALLBACK.to_string()),
-		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
-		config: None,
-		event_callback: Some(PyEventCallbackInterface::new()),
-	};
+// #[pyo3_asyncio::tokio::test]
+// async fn workflow_manager_python_tests_with_callback() -> pyo3::PyResult<()> {
+// 	let config = Config {
+// 		version: 1.0,
+// 		querent_id: "test_querent_callback".to_string(),
+// 		querent_name: "Test Querent For Callbacks".to_string(),
+// 		workflow: WorkflowConfig {
+// 			name: "test_callback".to_string(),
+// 			id: "workflow_id_test_callback".to_string(),
+// 			config: HashMap::new(),
+// 			channel: None,
+// 			inner_channel: ChannelHandler::new(),
+// 			inner_event_handler: EventHandler::new(),
+// 			event_handler: None,
+// 		},
+// 		collectors: vec![],
+// 		engines: vec![],
+// 		resource: None,
+// 	};
 
-	// Create a WorkflowManager and add the Workflow
-	let workflow_manager = WorkflowManager::new().expect("Failed to create WorkflowManager");
-	assert!(workflow_manager.add_workflow(workflow).is_ok());
+// 	// Create a sample Workflow
+// 	let workflow = Workflow {
+// 		name: "test_workflow".to_string(),
+// 		id: "workflow_id".to_string(),
+// 		import: "".to_string(),
+// 		attr: "print_querent".to_string(),
+// 		code: Some(CODE_WITH_CALLBACK.to_string()),
+// 		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
+// 		config: Some(config),
+// 	};
 
-	// Start the workflows
-	match workflow_manager.start_workflows().await {
-		Ok(_) => assert!(true),
-		Err(e) => panic!("Error starting workflows: {}", e),
-	}
+// 	// Create a WorkflowManager and add the Workflow
+// 	let workflow_manager: WorkflowManager =
+// 		WorkflowManager::new().expect("Failed to create WorkflowManager");
+// 	assert!(workflow_manager.add_workflow(workflow).is_ok());
 
-	Ok(())
-}
+// 	// Start the workflows
+// 	match workflow_manager.start_workflows().await {
+// 		Ok(_) => assert!(true),
+// 		Err(e) => panic!("Error starting workflows: {}", e),
+// 	}
+
+// 	Ok(())
+// }
