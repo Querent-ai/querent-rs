@@ -10,6 +10,7 @@ pub trait EventCallbackInterface {
 
 // Define a basic event handler struct
 #[derive(Clone, Debug)]
+#[pyclass]
 pub struct EventHandler {}
 
 impl EventHandler {
@@ -32,8 +33,8 @@ pub struct PyEventCallbackInterface {
 impl PyEventCallbackInterface {
 	// Python constructor for PyEventCallbackInterface
 	#[new]
-	pub fn new() -> Self {
-		PyEventCallbackInterface { event_handler: EventHandler::new() }
+	pub fn new(event_handler: EventHandler) -> Self {
+		PyEventCallbackInterface { event_handler }
 	}
 
 	// Python method to handle events

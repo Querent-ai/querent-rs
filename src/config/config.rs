@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use pyo3::{prelude::*, types::PyDict, PyObject, ToPyObject};
 
 use crate::{
-	callbacks::interface::EventHandler,
+	callbacks::{interface::EventHandler, PyEventCallbackInterface},
 	comm::{ChannelHandler, PyMessageInterface},
 };
 
@@ -101,6 +101,12 @@ impl ToPyObject for WorkflowConfig {
 		let channel: PyObject =
 			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
 		workflow_dict.set_item("channel", channel).unwrap();
+
+		// convert event handler to python object
+		let event_interface = PyEventCallbackInterface::new(self.inner_event_handler.clone());
+		let event_handler: PyObject =
+			Py::new(py, event_interface).expect("Unable to create class").into_py(py);
+		workflow_dict.set_item("event_handler", event_handler).unwrap();
 
 		workflow_dict.to_object(py)
 	}

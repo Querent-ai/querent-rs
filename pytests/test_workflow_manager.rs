@@ -326,3 +326,64 @@ async fn workflow_manager_python_tests_with_config_channel() -> pyo3::PyResult<(
 
 	Ok(())
 }
+
+const CODE_CONFIG_EVENT_HANDLER: &str = r#"
+import asyncio
+
+async def print_querent(config, text: str):
+    """Prints the provided text and sends supported event_type and event_data"""
+    print(text)
+    if config['workflow'] is not None:
+        event_type = "chat_completed"  # Replace with the desired event type
+        event_data = {
+            "event_type": event_type,
+            "timestamp": 123.45,  # Replace with the actual timestamp
+            "payload": "🚀"  # Replace with the actual payload data
+        }
+        config['workflow']['event_handler'].handle_event(event_type, event_data)
+"#;
+
+#[pyo3_asyncio::tokio::test]
+async fn workflow_manager_python_tests_with_config_events() -> pyo3::PyResult<()> {
+	// Create a sample Config object
+	let config = Config {
+		version: 1.0,
+		querent_id: "event_handler".to_string(),
+		querent_name: "Test Querent event_handler".to_string(),
+		workflow: WorkflowConfig {
+			name: "test_workflow".to_string(),
+			id: "workflow_id".to_string(),
+			config: HashMap::new(),
+			channel: None,
+			inner_channel: ChannelHandler::new(),
+			inner_event_handler: EventHandler::new(),
+			event_handler: None,
+		},
+		collectors: vec![],
+		engines: vec![],
+		resource: None,
+	};
+
+	// Create a sample Workflow
+	let workflow = Workflow {
+		name: "test_workflow".to_string(),
+		id: "workflow_id".to_string(),
+		import: "".to_string(),
+		attr: "print_querent".to_string(),
+		code: Some(CODE_CONFIG_EVENT_HANDLER.to_string()),
+		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
+		config: Some(config),
+	};
+
+	// Create a WorkflowManager and add the Workflow
+	let workflow_manager = WorkflowManager::new().expect("Failed to create WorkflowManager");
+	assert!(workflow_manager.add_workflow(workflow).is_ok());
+
+	// Start the workflows
+	match workflow_manager.start_workflows().await {
+		Ok(_) => assert!(true),
+		Err(e) => panic!("Error starting workflows: {}", e),
+	}
+
+	Ok(())
+}
