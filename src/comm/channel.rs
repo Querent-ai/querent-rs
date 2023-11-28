@@ -75,21 +75,21 @@ impl ChannelInterface for ChannelHandler {
 	// Implementation of the handle_event method for EventHandler
 	fn receive_in_python(&mut self) -> Option<MessageState> {
 		// Print basic information about the event (TODO: Handle different event types)
-		println!("TODO: handle different event types: Event coming from rust");
+		println!("TODO✅: handle different channel message types: Event coming from rust");
 		None
 	}
 
 	// Implementation of the handle_event method for EventHandler
 	fn receive_in_rust(&mut self) -> Option<MessageState> {
 		// Print basic information about the event (TODO: Handle different event types)
-		println!("TODO: handle different event types: Event coming from rust");
+		println!("TODO✅: handle different channel message types: Event coming from rust");
 		None
 	}
 
 	// Implementation of the handle_event method for EventHandler
 	fn send_in_python(&mut self, message_type: MessageType, message_data: MessageState) {
 		// Print basic information about the event (TODO: Handle different event types)
-		println!("TODO: handle different event types: Event coming from rust");
+		println!("TODO✅: handle different channel message types: Event coming from rust");
 		println!("Message type: {:?}", message_type);
 		println!("Message data: {:?}", message_data);
 	}
@@ -97,7 +97,7 @@ impl ChannelInterface for ChannelHandler {
 	// Implementation of the handle_event method for EventHandler
 	fn send_in_rust(&mut self, message_type: MessageType, message_data: MessageState) {
 		// Print basic information about the event (TODO: Handle different event types)
-		println!("TODO: handle different event types: Event coming from rust");
+		println!("TODO✅: handle different channel message types: Event coming from rust");
 		println!("Message type: {:?}", message_type);
 		println!("Message data: {:?}", message_data);
 	}
