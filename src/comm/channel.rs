@@ -76,7 +76,12 @@ impl ChannelInterface for ChannelHandler {
 	fn receive_in_python(&mut self) -> Option<MessageState> {
 		// Print basic information about the event (TODO: Handle different event types)
 		println!("TODO✅: handle different channel message types: Event coming from rust");
-		None
+		let message_state = MessageState {
+			timestamp: 0f64,
+			payload: "Hello from rust".to_string(),
+			message_type: MessageType::Stop,
+		};
+		Some(message_state)
 	}
 
 	// Implementation of the handle_event method for EventHandler

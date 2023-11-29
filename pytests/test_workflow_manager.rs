@@ -387,3 +387,62 @@ async fn workflow_manager_python_tests_with_config_events() -> pyo3::PyResult<()
 
 	Ok(())
 }
+
+const CODE_CONFIG_CHANNEL_LOOP: &str = r#"
+import asyncio
+
+async def print_querent(config, text):
+    """Prints the provided text and config"""
+    print(text)
+    channel = config['workflow']['channel']
+    while True:
+        result = channel.receive_in_python()
+        print(result)
+        if result is not None:
+            break
+"#;
+
+#[pyo3_asyncio::tokio::test]
+async fn workflow_manager_python_tests_with_config_channel_break() -> pyo3::PyResult<()> {
+	// Create a sample Config object
+	let config = Config {
+		version: 1.0,
+		querent_id: "event_handler".to_string(),
+		querent_name: "Test Querent event_handler".to_string(),
+		workflow: WorkflowConfig {
+			name: "test_workflow".to_string(),
+			id: "workflow_id".to_string(),
+			config: HashMap::new(),
+			channel: None,
+			inner_channel: ChannelHandler::new(),
+			inner_event_handler: EventHandler::new(),
+			event_handler: None,
+		},
+		collectors: vec![],
+		engines: vec![],
+		resource: None,
+	};
+
+	// Create a sample Workflow
+	let workflow = Workflow {
+		name: "test_workflow".to_string(),
+		id: "workflow_id".to_string(),
+		import: "".to_string(),
+		attr: "print_querent".to_string(),
+		code: Some(CODE_CONFIG_CHANNEL_LOOP.to_string()),
+		arguments: vec![CLRepr::String("Querent".to_string(), StringType::Normal)],
+		config: Some(config),
+	};
+
+	// Create a WorkflowManager and add the Workflow
+	let workflow_manager = WorkflowManager::new().expect("Failed to create WorkflowManager");
+	assert!(workflow_manager.add_workflow(workflow).is_ok());
+
+	// Start the workflows
+	match workflow_manager.start_workflows().await {
+		Ok(_) => assert!(true),
+		Err(e) => panic!("Error starting workflows: {}", e),
+	}
+
+	Ok(())
+}
