@@ -54,7 +54,9 @@ impl EventCallbackInterface for EventHandler {
 		// If the event sender is not None, send the event
 		if let Some(event_sender) = &self.event_sender {
 			// Send the event
-			event_sender.try_send((event_type, event_data)).unwrap();
+			event_sender.try_send((event_type, event_data)).unwrap_or_else(|e| {
+				println!("Error sending event: {:?}", e);
+			});
 		} else {
 			println!("Event sender is None");
 			println!("Event type: {:?}", event_type);
