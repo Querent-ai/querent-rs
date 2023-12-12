@@ -56,7 +56,7 @@ impl Default for Config {
 				config: HashMap::new(),
 				inner_channel: ChannelHandler::new(),
 				channel: None,
-				inner_event_handler: EventHandler::new(),
+				inner_event_handler: EventHandler::new(None),
 				event_handler: None,
 			},
 			collectors: vec![],

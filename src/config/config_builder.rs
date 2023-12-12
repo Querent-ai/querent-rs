@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{callbacks::interface::EventHandler, comm::ChannelHandler};
+use tokio::sync::mpsc;
+
+use crate::{
+	callbacks::{interface::EventHandler, EventState, EventType},
+	comm::ChannelHandler,
+};
 
 use super::{
 	config::{CollectorConfig, EngineConfig, ResourceConfig, WorkflowConfig},
@@ -17,6 +22,7 @@ pub struct ConfigBuilder {
 	collectors: Option<Vec<CollectorConfig>>,
 	engines: Option<Vec<EngineConfig>>,
 	resource: Option<Option<ResourceConfig>>,
+	event_sender: Option<mpsc::Sender<(EventType, EventState)>>,
 }
 
 impl ConfigBuilder {
@@ -67,6 +73,12 @@ impl ConfigBuilder {
 		self
 	}
 
+	/// Sets the event sender for the `Config`.
+	pub fn event_sender(mut self, event_sender: mpsc::Sender<(EventType, EventState)>) -> Self {
+		self.event_sender = Some(event_sender);
+		self
+	}
+
 	/// Builds the `Config` using the configured parameters.
 	pub fn build(self) -> Config {
 		Config {
@@ -79,7 +91,7 @@ impl ConfigBuilder {
 				config: HashMap::new(),
 				channel: None,
 				inner_channel: ChannelHandler::new(),
-				inner_event_handler: EventHandler::new(),
+				inner_event_handler: EventHandler::new(self.event_sender),
 				event_handler: None,
 			}),
 			collectors: self.collectors.unwrap_or_else(Vec::new),

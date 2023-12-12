@@ -2,6 +2,7 @@
 use crate::callbacks::types::event::{EventState, EventType};
 // Import necessary items from the pyo3 crate
 use pyo3::prelude::*;
+use tokio::sync::mpsc;
 
 // Define the base interface for event callbacks
 pub trait EventCallbackInterface {
@@ -11,12 +12,14 @@ pub trait EventCallbackInterface {
 // Define a basic event handler struct
 #[derive(Clone, Debug)]
 #[pyclass]
-pub struct EventHandler {}
+pub struct EventHandler {
+	event_sender: Option<mpsc::Sender<(EventType, EventState)>>,
+}
 
 impl EventHandler {
 	// Constructor for EventHandler
-	pub fn new() -> Self {
-		EventHandler {}
+	pub fn new(event_sender: Option<mpsc::Sender<(EventType, EventState)>>) -> Self {
+		EventHandler { event_sender }
 	}
 }
 
@@ -48,8 +51,14 @@ impl PyEventCallbackInterface {
 impl EventCallbackInterface for EventHandler {
 	// Implementation of the handle_event method for EventHandler
 	fn handle_event(&mut self, event_type: EventType, event_data: EventState) {
-		// Print basic information about the event (TODO: Handle different event types)
-		println!("Event: {:?}, {:?}", event_type, event_data);
-		println!("TODO: handle different event types: Event coming from python");
+		// If the event sender is not None, send the event
+		if let Some(event_sender) = &self.event_sender {
+			// Send the event
+			event_sender.try_send((event_type, event_data)).unwrap();
+		} else {
+			println!("Event sender is None");
+			println!("Event type: {:?}", event_type);
+			println!("Event data: {:?}", event_data);
+		}
 	}
 }
