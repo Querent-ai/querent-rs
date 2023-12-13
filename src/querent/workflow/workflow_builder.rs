@@ -32,6 +32,19 @@ impl WorkflowBuilder {
 		}
 	}
 
+	/// Workflow from given workflow.
+	pub fn from_workflow(workflow: Workflow) -> Self {
+		WorkflowBuilder {
+			name: Some(workflow.name),
+			id: workflow.id,
+			import: Some(workflow.import),
+			attr: Some(workflow.attr),
+			code: workflow.code,
+			arguments: workflow.arguments,
+			config: workflow.config,
+		}
+	}
+
 	/// Sets the name of the workflow.
 	pub fn name(mut self, name: &str) -> Self {
 		self.name = Some(name.to_string());

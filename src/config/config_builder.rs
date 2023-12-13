@@ -22,6 +22,8 @@ pub struct ConfigBuilder {
 	collectors: Option<Vec<CollectorConfig>>,
 	engines: Option<Vec<EngineConfig>>,
 	resource: Option<Option<ResourceConfig>>,
+	event_handler: Option<EventHandler>,
+	channel_handler: Option<ChannelHandler>,
 	event_sender: Option<mpsc::Sender<(EventType, EventState)>>,
 }
 
@@ -79,6 +81,18 @@ impl ConfigBuilder {
 		self
 	}
 
+	/// Sets the event handler for the `Config`.
+	pub fn event_handler(mut self, event_handler: EventHandler) -> Self {
+		self.event_handler = Some(event_handler);
+		self
+	}
+
+	/// Sets the channel handler for the `Config`.
+	pub fn channel_handler(mut self, channel_handler: ChannelHandler) -> Self {
+		self.channel_handler = Some(channel_handler);
+		self
+	}
+
 	/// Builds the `Config` using the configured parameters.
 	pub fn build(self) -> Config {
 		Config {
@@ -90,8 +104,8 @@ impl ConfigBuilder {
 				id: "workflow".to_string(),
 				config: HashMap::new(),
 				channel: None,
-				inner_channel: ChannelHandler::new(),
-				inner_event_handler: EventHandler::new(self.event_sender),
+				inner_channel: Some(ChannelHandler::new()),
+				inner_event_handler: Some(EventHandler::new(self.event_sender)),
 				event_handler: None,
 			}),
 			collectors: self.collectors.unwrap_or_else(Vec::new),

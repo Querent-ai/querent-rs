@@ -54,9 +54,9 @@ impl Default for Config {
 				name: "workflow".to_string(),
 				id: "workflow".to_string(),
 				config: HashMap::new(),
-				inner_channel: ChannelHandler::new(),
+				inner_channel: Some(ChannelHandler::new()),
 				channel: None,
-				inner_event_handler: EventHandler::new(None),
+				inner_event_handler: Some(EventHandler::new(None)),
 				event_handler: None,
 			},
 			collectors: vec![],
@@ -77,13 +77,13 @@ pub struct WorkflowConfig {
 	/// Additional configuration options for the workflow.
 	pub config: HashMap<String, String>,
 	/// Internal channel handler in rust will be wrapped and marshalled into python.
-	pub inner_channel: ChannelHandler,
+	pub inner_channel: Option<ChannelHandler>,
 	/// PyObject for the channel handler.
 	/// This is a workaround for the fact that PyMessageInterface is not a PyObject.
 	#[pyo3(get, set)]
 	pub channel: Option<PyObject>,
 	/// Inner EventHandler for workflow to get events from python
-	pub inner_event_handler: EventHandler,
+	pub inner_event_handler: Option<EventHandler>,
 	/// PyObject for the event handler.
 	#[pyo3(get, set)]
 	pub event_handler: Option<PyObject>,
@@ -97,17 +97,19 @@ impl ToPyObject for WorkflowConfig {
 		workflow_dict.set_item("id", &self.id).unwrap();
 		workflow_dict.set_item("config", &self.config).unwrap();
 		// convert channel handler to python object
-		let channel_interface = PyMessageInterface::new(self.inner_channel.clone());
-		let channel: PyObject =
-			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
-		workflow_dict.set_item("channel", channel).unwrap();
-
+		if let Some(inner_channel) = &self.inner_channel {
+			let channel_interface = PyMessageInterface::new(inner_channel.clone());
+			let channel: PyObject =
+				Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+			workflow_dict.set_item("channel", channel).unwrap();
+		}
 		// convert event handler to python object
-		let event_interface = PyEventCallbackInterface::new(self.inner_event_handler.clone());
-		let event_handler: PyObject =
-			Py::new(py, event_interface).expect("Unable to create class").into_py(py);
-		workflow_dict.set_item("event_handler", event_handler).unwrap();
-
+		if let Some(inner_event_handler) = &self.inner_event_handler {
+			let event_interface = PyEventCallbackInterface::new(inner_event_handler.clone());
+			let event_handler: PyObject =
+				Py::new(py, event_interface).expect("Unable to create class").into_py(py);
+			workflow_dict.set_item("event_handler", event_handler).unwrap();
+		}
 		workflow_dict.to_object(py)
 	}
 }
@@ -125,7 +127,7 @@ pub struct CollectorConfig {
 	/// Additional configuration options for the collector.
 	pub config: HashMap<String, String>,
 	/// Internal channel handler in rust will be wrapped and marshalled into python.
-	pub inner_channel: ChannelHandler,
+	pub inner_channel: Option<ChannelHandler>,
 	/// PyObject for the channel handler.
 	#[pyo3(get, set)]
 	pub channel: Option<PyObject>,
@@ -140,10 +142,12 @@ impl ToPyObject for CollectorConfig {
 		collector_dict.set_item("backend", &self.backend).unwrap();
 		collector_dict.set_item("config", &self.config).unwrap();
 		// convert channel handler to python object
-		let channel_interface = PyMessageInterface::new(self.inner_channel.clone());
-		let channel: PyObject =
-			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
-		collector_dict.set_item("channel", channel).unwrap();
+		if let Some(inner_channel) = &self.inner_channel {
+			let channel_interface = PyMessageInterface::new(inner_channel.clone());
+			let channel: PyObject =
+				Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+			collector_dict.set_item("channel", channel).unwrap();
+		}
 		collector_dict.to_object(py)
 	}
 }
@@ -167,7 +171,7 @@ pub struct EngineConfig {
 	/// Message throttle delay for the engine (optional).
 	pub message_throttle_delay: Option<u32>,
 	/// Internal channel handler in rust will be wrapped and marshalled into python.
-	pub inner_channel: ChannelHandler,
+	pub inner_channel: Option<ChannelHandler>,
 	/// PyObject for the channel handler.
 	#[pyo3(get, set)]
 	pub channel: Option<PyObject>,
@@ -189,11 +193,12 @@ impl ToPyObject for EngineConfig {
 			.set_item("message_throttle_delay", &self.message_throttle_delay)
 			.unwrap();
 		// convert channel handler to python object
-		let channel_interface = PyMessageInterface::new(self.inner_channel.clone());
-		let channel: PyObject =
-			Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
-		engine_dict.set_item("channel", channel).unwrap();
-
+		if let Some(inner_channel) = &self.inner_channel {
+			let channel_interface = PyMessageInterface::new(inner_channel.clone());
+			let channel: PyObject =
+				Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+			engine_dict.set_item("channel", channel).unwrap();
+		}
 		engine_dict.to_object(py)
 	}
 }
