@@ -68,10 +68,9 @@ impl WorkflowBuilder {
 		self.code = Some(code.to_string());
 		self
 	}
-
-	/// Adds an argument to the workflow.
-	pub fn add_argument(mut self, argument: CLRepr) -> Self {
-		self.arguments.push(argument);
+	/// add arguments to the workflow
+	pub fn arguments(mut self, arguments: Vec<CLRepr>) -> Self {
+		self.arguments = arguments;
 		self
 	}
 
