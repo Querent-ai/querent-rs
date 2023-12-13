@@ -52,20 +52,20 @@ impl WorkflowBuilder {
 	}
 
 	/// Sets the import statement for the workflow.
-	pub fn import(mut self, import: &str) -> Self {
-		self.import = Some(import.to_string());
+	pub fn import(mut self, import: Option<String>) -> Self {
+		self.import = import;
 		self
 	}
 
 	/// Sets the attribute representing the start function of the workflow.
-	pub fn attr(mut self, attr: &str) -> Self {
-		self.attr = Some(attr.to_string());
+	pub fn attr(mut self, attr: Option<String>) -> Self {
+		self.attr = attr;
 		self
 	}
 
 	/// Sets the Python code for the workflow.
-	pub fn code(mut self, code: &str) -> Self {
-		self.code = Some(code.to_string());
+	pub fn code(mut self, code: Option<String>) -> Self {
+		self.code = code;
 		self
 	}
 	/// add arguments to the workflow
