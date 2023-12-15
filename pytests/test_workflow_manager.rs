@@ -338,7 +338,7 @@ async def print_querent(config, text: str):
         event_data = {
             "event_type": event_type,
             "timestamp": 123.45,  # Replace with the actual timestamp
-            "payload": "🚀"  # Replace with the actual payload data
+            "payload": "🚀🚀"  # Replace with the actual payload data
         }
         config['workflow']['event_handler'].handle_event(event_type, event_data)
 "#;
@@ -428,12 +428,12 @@ async fn workflow_manager_python_tests_with_config_events_mpsc() -> pyo3::PyResu
 	let workflow_manager = WorkflowManager::new().expect("Failed to create WorkflowManager");
 	assert!(workflow_manager.add_workflow(workflow).is_ok());
 
-	// Start the workflows
-	match workflow_manager.start_workflows().await {
-		Ok(_) => assert!(true),
-		Err(e) => panic!("Error starting workflows: {}", e),
-	}
-
+	// Start the workflows in a separate task
+	tokio::spawn(async move {
+		if let Err(e) = workflow_manager.start_workflows().await {
+			log::error!("Error starting workflows: {}", e);
+		}
+	});
 	// check if the event is received
 	let event = rx.recv().await;
 	println!("event is now: {:?}", event);
@@ -441,7 +441,7 @@ async fn workflow_manager_python_tests_with_config_events_mpsc() -> pyo3::PyResu
 	let event = event.unwrap();
 	assert_eq!(event.0, EventType::ChatCompleted);
 	assert_eq!(event.1.timestamp, 123.45);
-	assert_eq!(event.1.payload, "🚀");
+	assert_eq!(event.1.payload, "🚀🚀");
 
 	Ok(())
 }
