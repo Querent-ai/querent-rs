@@ -7,6 +7,8 @@ pub enum EventType {
 	ContextualGraphUpdated,
 	SemanticGraphUpdated,
 	ChatCompleted,
+	Success,
+	Failure,
 }
 
 // Implement conversion from Python object to EventType
