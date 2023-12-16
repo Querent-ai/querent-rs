@@ -2,7 +2,7 @@
 use pyo3::{exceptions::PyTypeError, prelude::*};
 
 // Define an enumeration for different event types
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum EventType {
 	ContextualGraphUpdated,
 	SemanticGraphUpdated,
