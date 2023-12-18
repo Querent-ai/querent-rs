@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use pyo3::exceptions::PyTypeError;
-use querent_rs::{
+use querent_synapse::{
 	callbacks::{interface::EventHandler, EventType},
 	comm::ChannelHandler,
 	config::{config::WorkflowConfig, Config},

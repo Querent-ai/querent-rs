@@ -15,7 +15,7 @@ To utilize the Querent SDK for Rust, include it in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-querent_rs = "0.1.0"
+querent_synapse = "0.1.0"
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ querent_rs = "0.1.0"
 Below is a basic example of starting a Querent workflow from a Rust application:
 
 ```rust
-use querent_rs::{Querent, WorkflowBuilder, Config, PyEventCallbackInterface, py_runtime_init};
+use querent_synapse::{Querent, WorkflowBuilder, Config, PyEventCallbackInterface, py_runtime_init};
 
 fn main() {
     // Initialize the Python runtime
