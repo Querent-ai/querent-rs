@@ -1,6 +1,6 @@
 [package]
-name = "querent-rs"
-description = "A rust bridge capable of handling and executing querent workflows and be able to respond to incoming events via callbacks"
+name = "querent-synapse"
+description = "A rust bridge capable of handling and executing querent workflows and be able to respond to incoming events via callbacks. Acting like a synapse between querent and the outside world."
 edition = "2021"
 homepage = "https://querent.xyz"
 license = "Apache-2.0"
