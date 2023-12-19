@@ -1,8 +1,9 @@
 // Import necessary items from the pyo3 crate
 use pyo3::{exceptions::PyTypeError, prelude::*};
+use serde::Serialize;
 
 // Define an enumeration for different event types
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize)]
 pub enum EventType {
 	ContextualTriples,
 	RdfContextualTriples,
@@ -34,7 +35,7 @@ impl<'a> FromPyObject<'a> for EventType {
 }
 
 // Define a structure to represent the state of an event
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct EventState {
 	pub event_type: EventType,
 	pub timestamp: f64,
