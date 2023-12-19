@@ -23,6 +23,7 @@ fn test_callback_interface() {
 			event_type: EventType::ContextualTriples,
 			timestamp: 123.45,
 			payload: "TestPayload".to_string(),
+			file: "TestFile".to_string(),
 		},
 	);
 }

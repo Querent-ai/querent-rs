@@ -40,6 +40,7 @@ pub struct EventState {
 	pub event_type: EventType,
 	pub timestamp: f64,
 	pub payload: String,
+	pub file: String,
 }
 
 // Implement conversion from Python object to EventState
@@ -49,7 +50,8 @@ impl<'a> FromPyObject<'a> for EventState {
 		let event_type = ob.get_item("event_type")?.extract()?;
 		let timestamp = ob.get_item("timestamp")?.extract()?;
 		let payload = ob.get_item("payload")?.extract()?;
+		let file = ob.get_item("file")?.extract()?;
 		// Create and return an EventState instance
-		Ok(EventState { event_type, timestamp, payload })
+		Ok(EventState { event_type, timestamp, payload, file })
 	}
 }
