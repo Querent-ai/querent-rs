@@ -5,10 +5,8 @@ use serde::Serialize;
 // Define an enumeration for different event types
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize)]
 pub enum EventType {
-	ContextualTriples,
-	RdfContextualTriples,
-	RdfSemanticTriples,
-	ContextualEmbeddings,
+	Graph,
+	Vector,
 	Success,
 	Failure,
 }
@@ -20,10 +18,8 @@ impl<'a> FromPyObject<'a> for EventType {
 		if let Ok(event_type) = ob.extract::<&str>() {
 			// Match the string to determine the EventType
 			match event_type {
-				"ContextualTriples" => Ok(EventType::ContextualTriples),
-				"RdfContextualTriples" => Ok(EventType::RdfContextualTriples),
-				"RdfSemanticTriples" => Ok(EventType::RdfSemanticTriples),
-				"ContextualEmbeddings" => Ok(EventType::ContextualEmbeddings),
+				"Graph" => Ok(EventType::Graph),
+				"Vector" => Ok(EventType::Vector),
 				// If the string does not match any known EventType, return an error
 				_ => Err(PyErr::new::<PyTypeError, _>("Invalid event type")),
 			}
