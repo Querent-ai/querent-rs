@@ -58,6 +58,8 @@ impl Default for Config {
 				channel: None,
 				inner_event_handler: Some(EventHandler::new(None)),
 				event_handler: None,
+				inner_tokens_feader: None,
+				tokens_feader: None,
 			},
 			collectors: vec![],
 			engines: vec![],
@@ -87,6 +89,11 @@ pub struct WorkflowConfig {
 	/// PyObject for the event handler.
 	#[pyo3(get, set)]
 	pub event_handler: Option<PyObject>,
+	/// Token feader for the engine for live tokens
+	pub inner_tokens_feader: Option<ChannelHandler>,
+	/// Token feeder for the engine for live tokens
+	#[pyo3(get, set)]
+	pub tokens_feader: Option<PyObject>,
 }
 
 impl ToPyObject for WorkflowConfig {
@@ -109,6 +116,13 @@ impl ToPyObject for WorkflowConfig {
 			let event_handler: PyObject =
 				Py::new(py, event_interface).expect("Unable to create class").into_py(py);
 			workflow_dict.set_item("event_handler", event_handler).unwrap();
+		}
+		// convert token feeder to python object
+		if let Some(inner_tokens_feader) = &self.inner_tokens_feader {
+			let channel_interface = PyMessageInterface::new(inner_tokens_feader.clone());
+			let tokens_feader: PyObject =
+				Py::new(py, channel_interface).expect("Unable to create class").into_py(py);
+			workflow_dict.set_item("tokens_feader", tokens_feader).unwrap();
 		}
 		workflow_dict.to_object(py)
 	}
@@ -175,8 +189,6 @@ pub struct EngineConfig {
 	/// PyObject for the channel handler.
 	#[pyo3(get, set)]
 	pub channel: Option<PyObject>,
-	/// Token feader for the engine for live tokens
-	pub inner_tokens_feader: Option<ChannelHandler>,
 }
 
 impl ToPyObject for EngineConfig {

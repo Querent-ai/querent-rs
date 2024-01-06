@@ -107,6 +107,8 @@ impl ConfigBuilder {
 				inner_channel: None,
 				inner_event_handler: Some(EventHandler::new(self.event_sender)),
 				event_handler: None,
+				inner_tokens_feader: None,
+				tokens_feader: None,
 			}),
 			collectors: self.collectors.unwrap_or_else(Vec::new),
 			engines: self.engines.unwrap_or_else(Vec::new),
