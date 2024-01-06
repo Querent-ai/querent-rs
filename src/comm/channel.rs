@@ -18,7 +18,6 @@ pub trait ChannelInterface {
 #[pyclass]
 pub struct ChannelHandler {
 	pub token_receiver: Option<crossbeam_channel::Receiver<IngestedTokens>>,
-	pub py_message_sender: Option<crossbeam_channel::Sender<(MessageType, MessageState)>>,
 	pub py_message_receiver: Option<crossbeam_channel::Receiver<(MessageType, MessageState)>>,
 	pub message_sender: Option<crossbeam_channel::Sender<(MessageType, MessageState)>>,
 }
@@ -27,11 +26,10 @@ impl ChannelHandler {
 	// Constructor for EventHandler
 	pub fn new(
 		token_receiver: Option<crossbeam_channel::Receiver<IngestedTokens>>,
-		py_message_sender: Option<crossbeam_channel::Sender<(MessageType, MessageState)>>,
 		py_message_receiver: Option<crossbeam_channel::Receiver<(MessageType, MessageState)>>,
 		message_sender: Option<crossbeam_channel::Sender<(MessageType, MessageState)>>,
 	) -> Self {
-		ChannelHandler { py_message_sender, py_message_receiver, token_receiver, message_sender }
+		ChannelHandler { py_message_receiver, token_receiver, message_sender }
 	}
 }
 
