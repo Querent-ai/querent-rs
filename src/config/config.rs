@@ -54,7 +54,7 @@ impl Default for Config {
 				name: "workflow".to_string(),
 				id: "workflow".to_string(),
 				config: HashMap::new(),
-				inner_channel: Some(ChannelHandler::new()),
+				inner_channel: None,
 				channel: None,
 				inner_event_handler: Some(EventHandler::new(None)),
 				event_handler: None,
@@ -175,6 +175,8 @@ pub struct EngineConfig {
 	/// PyObject for the channel handler.
 	#[pyo3(get, set)]
 	pub channel: Option<PyObject>,
+	/// Token feader for the engine for live tokens
+	pub inner_tokens_feader: Option<ChannelHandler>,
 }
 
 impl ToPyObject for EngineConfig {

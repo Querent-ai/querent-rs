@@ -104,7 +104,7 @@ impl ConfigBuilder {
 				id: "workflow".to_string(),
 				config: HashMap::new(),
 				channel: None,
-				inner_channel: Some(ChannelHandler::new()),
+				inner_channel: None,
 				inner_event_handler: Some(EventHandler::new(self.event_sender)),
 				event_handler: None,
 			}),
