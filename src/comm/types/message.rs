@@ -6,7 +6,7 @@ use pyo3::{
 };
 
 // Define an enumeration for different event types
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MessageType {
 	Start,
 	Stop,
