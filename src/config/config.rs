@@ -174,16 +174,8 @@ pub struct EngineConfig {
 	pub id: String,
 	/// Name of the engine.
 	pub name: String,
-	/// Number of workers used by the engine (optional).
-	pub num_workers: Option<u32>,
-	/// Maximum number of retries for the engine (optional).
-	pub max_retries: Option<u32>,
-	/// Interval between retries for the engine (optional).
-	pub retry_interval: Option<u32>,
-	/// Message throttle limit for the engine (optional).
-	pub message_throttle_limit: Option<u32>,
-	/// Message throttle delay for the engine (optional).
-	pub message_throttle_delay: Option<u32>,
+	/// Config for the engine.
+	pub config: HashMap<String, String>,
 	/// Internal channel handler in rust will be wrapped and marshalled into python.
 	pub inner_channel: Option<ChannelHandler>,
 	/// PyObject for the channel handler.
@@ -197,15 +189,7 @@ impl ToPyObject for EngineConfig {
 		let engine_dict = PyDict::new(py);
 		engine_dict.set_item("id", &self.id).unwrap();
 		engine_dict.set_item("name", &self.name).unwrap();
-		engine_dict.set_item("num_workers", &self.num_workers).unwrap();
-		engine_dict.set_item("max_retries", &self.max_retries).unwrap();
-		engine_dict.set_item("retry_interval", &self.retry_interval).unwrap();
-		engine_dict
-			.set_item("message_throttle_limit", &self.message_throttle_limit)
-			.unwrap();
-		engine_dict
-			.set_item("message_throttle_delay", &self.message_throttle_delay)
-			.unwrap();
+		engine_dict.set_item("config", &self.config).unwrap();
 		// convert channel handler to python object
 		if let Some(inner_channel) = &self.inner_channel {
 			let channel_interface = PyMessageInterface::new(inner_channel.clone());
