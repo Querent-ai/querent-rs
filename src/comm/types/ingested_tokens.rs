@@ -1,7 +1,7 @@
 use pyo3::{prelude::*, types::PyDict, PyObject, Python, ToPyObject};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, utoipa::ToSchema)]
 #[pyclass]
 pub struct IngestedTokens {
 	pub data: Option<Vec<String>>,
