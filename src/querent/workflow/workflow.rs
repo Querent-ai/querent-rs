@@ -158,16 +158,5 @@ impl Drop for WorkflowManager {
 	fn drop(&mut self) {
 		log::info!("Dropping WorkflowManager");
 		let _ = self.runtime;
-
-		// Cleanup the Python runtime
-		Python::with_gil(|py| {
-			if let Err(e) = py
-				.import("sys")
-				.and_then(|sys| sys.getattr("exit"))
-				.and_then(|exit| exit.call0())
-			{
-				log::error!("Failed to exit Python runtime: {}", e);
-			}
-		});
 	}
 }
