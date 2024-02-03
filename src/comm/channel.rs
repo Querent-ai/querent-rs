@@ -7,6 +7,8 @@ use super::IngestedTokens;
 pub trait ChannelInterface {
 	/// Receive tokens in python from rust
 	fn receive_tokens_in_python(&mut self) -> Option<IngestedTokens>;
+	/// Send tokens in rust from python
+	fn send_tokens_in_rust(&mut self, tokens: IngestedTokens);
 	/// Receive a message in python from rust
 	fn receive_in_python(&mut self) -> Option<MessageState>;
 	/// Send a message in rust from python
@@ -18,6 +20,7 @@ pub trait ChannelInterface {
 #[pyclass]
 pub struct ChannelHandler {
 	pub token_receiver: Option<crossbeam_channel::Receiver<IngestedTokens>>,
+	pub token_sender: Option<crossbeam_channel::Sender<IngestedTokens>>,
 	pub py_message_receiver: Option<crossbeam_channel::Receiver<(MessageType, MessageState)>>,
 	pub message_sender: Option<crossbeam_channel::Sender<(MessageType, MessageState)>>,
 }
@@ -25,11 +28,12 @@ pub struct ChannelHandler {
 impl ChannelHandler {
 	// Constructor for EventHandler
 	pub fn new(
+		token_sender: Option<crossbeam_channel::Sender<IngestedTokens>>,
 		token_receiver: Option<crossbeam_channel::Receiver<IngestedTokens>>,
 		py_message_receiver: Option<crossbeam_channel::Receiver<(MessageType, MessageState)>>,
 		message_sender: Option<crossbeam_channel::Sender<(MessageType, MessageState)>>,
 	) -> Self {
-		ChannelHandler { py_message_receiver, token_receiver, message_sender }
+		ChannelHandler { py_message_receiver, token_sender, token_receiver, message_sender }
 	}
 }
 
@@ -54,6 +58,12 @@ impl PyMessageInterface {
 	pub fn receive_tokens_in_python(&mut self) -> Option<IngestedTokens> {
 		// Delegate the event handling to the internal event handler
 		self.channel_handler.receive_tokens_in_python()
+	}
+
+	// Send tokens in rust from python
+	pub fn send_tokens_in_rust(&mut self, tokens: IngestedTokens) {
+		// Delegate the event handling to the internal event handler
+		self.channel_handler.send_tokens_in_rust(tokens)
 	}
 
 	// Python method to handle messages
@@ -85,6 +95,24 @@ impl ChannelInterface for ChannelHandler {
 			}
 		} else {
 			None
+		}
+	}
+
+	fn send_tokens_in_rust(&mut self, tokens: IngestedTokens) {
+		if self.token_sender.is_some() {
+			let token = self.token_sender.as_ref();
+			match token {
+				Some(token) => {
+					let token = token.send(tokens);
+					match token {
+						Ok(_) => (),
+						Err(_) => (),
+					}
+				},
+				None => (),
+			}
+		} else {
+			()
 		}
 	}
 

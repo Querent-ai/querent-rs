@@ -191,6 +191,7 @@ async fn workflow_manager_python_tests_with_config() -> pyo3::PyResult<()> {
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
 				None,
+				None,
 				Some(py_message_receiver),
 				Some(message_sender),
 			)),
@@ -254,6 +255,7 @@ async fn workflow_manager_python_tests_with_config2() -> pyo3::PyResult<()> {
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
 				None,
+				None,
 				Some(py_message_receiver),
 				Some(message_sender),
 			)),
@@ -315,6 +317,7 @@ async fn workflow_manager_python_tests_with_config_channel() -> pyo3::PyResult<(
 			config: HashMap::new(),
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
+				None,
 				None,
 				Some(py_message_receiver),
 				Some(message_sender),
@@ -386,6 +389,7 @@ async fn workflow_manager_python_tests_with_config_events() -> pyo3::PyResult<()
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
 				None,
+				None,
 				Some(py_message_receiver),
 				Some(message_sender),
 			)),
@@ -441,6 +445,7 @@ async fn workflow_manager_python_tests_with_config_events_mpsc() -> pyo3::PyResu
 			config: HashMap::new(),
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
+				None,
 				None,
 				Some(py_message_receiver),
 				Some(message_sender),
@@ -507,6 +512,7 @@ async fn workflow_manager_python_tests_with_config_events_mpsc_separate_receiver
 			config: HashMap::new(),
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
+				None,
 				None,
 				Some(py_message_receiver),
 				Some(message_sender),
@@ -593,6 +599,7 @@ async fn workflow_manager_python_tests_with_config_channel_break() -> pyo3::PyRe
 			config: HashMap::new(),
 			channel: None,
 			inner_channel: Some(ChannelHandler::new(
+				None,
 				None,
 				Some(py_message_receiver),
 				Some(message_sender),
