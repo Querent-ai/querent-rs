@@ -95,12 +95,12 @@ impl PyRuntime {
 						if send_res.is_err() {
 							return Err(QuerentError::internal(
 								"Unable to send result back to consumer".to_string(),
-							))
+							));
 						}
 					},
 				};
 
-				return Ok(())
+				return Ok(());
 			},
 		};
 
@@ -197,7 +197,7 @@ pub fn call_async(
 
 pub fn py_runtime_init() -> Result<(), QuerentError> {
 	if PY_RUNTIME.get().is_some() {
-		return Ok(())
+		return Ok(());
 	}
 
 	let runtime = tokio_runtime()?;

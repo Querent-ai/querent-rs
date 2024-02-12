@@ -27,7 +27,7 @@ impl CLReprPython for CLRepr {
 	/// Convert python value to CLRepr
 	fn from_python_ref(v: &PyAny) -> Result<Self, PyErr> {
 		if v.is_none() {
-			return Ok(Self::Null)
+			return Ok(Self::Null);
 		}
 
 		return Ok(if v.get_type().is_subclass_of::<PyString>()? {
@@ -90,25 +90,25 @@ impl CLReprPython for CLRepr {
 		} else if v.get_type().is_subclass_of::<PyComplex>()? {
 			return Err(PyErr::new::<PyTypeError, _>(
 				"Unable to represent PyComplex type as CLR from Python".to_string(),
-			))
+			));
 		} else if v.get_type().is_subclass_of::<PyDate>()? {
 			return Err(PyErr::new::<PyTypeError, _>(
 				"Unable to represent PyDate type as CLR from Python".to_string(),
-			))
+			));
 		} else if v.get_type().is_subclass_of::<PyFrame>()? {
 			let frame = v.downcast::<PyFrame>()?;
 
 			return Err(PyErr::new::<PyTypeError, _>(format!(
 				"Unable to represent PyFrame type as CLR from Python, value: {:?}",
 				frame
-			)))
+			)));
 		} else if v.get_type().is_subclass_of::<PyTraceback>()? {
 			let trb = v.downcast::<PyTraceback>()?;
 
 			return Err(PyErr::new::<PyTypeError, _>(format!(
 				"Unable to represent PyTraceback type as CLR from Python, value: {:?}",
 				trb
-			)))
+			)));
 		} else {
 			let is_sequence = unsafe { pyo3::ffi::PySequence_Check(v.as_ptr()) == 1 };
 			if is_sequence {
@@ -117,11 +117,11 @@ impl CLReprPython for CLRepr {
 				return Err(PyErr::new::<PyTypeError, _>(format!(
 					"Unable to represent PySequence type as CLR from Python, value: {:?}",
 					seq
-				)))
+				)));
 			}
 
 			Self::PythonRef(PythonRef::PyObject(v.into()))
-		})
+		});
 	}
 
 	fn into_py_impl(from: CLRepr, py: Python) -> Result<PyObject, PyErr> {

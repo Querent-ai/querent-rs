@@ -52,7 +52,7 @@ impl WorkflowManager {
 		let mut workflows =
 			self.workflows.lock().map_err(|e| format!("Mutex lock failed: {}", e))?;
 		if workflows.contains_key(&workflow.id) {
-			return Err("Workflow with the same ID already exists.".to_string())
+			return Err("Workflow with the same ID already exists.".to_string());
 		} else {
 			workflows.insert(workflow.id.clone(), workflow.clone());
 		}
@@ -140,12 +140,12 @@ impl WorkflowManager {
 					Ok(_) => log::info!("Workflow started."),
 					Err(e) => {
 						log::error!("Failed to start workflow: {}", e);
-						return Err(QuerentError::internal(e.to_string()))
+						return Err(QuerentError::internal(e.to_string()));
 					},
 				},
 				Err(e) => {
 					log::error!("Failed to start workflow: {}", e);
-					return Err(e)
+					return Err(e);
 				},
 			}
 		}

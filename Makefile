@@ -35,10 +35,10 @@ deny:
 .PHONY: format
 format:
 	@echo "Running Cargo fmt..."
-	@cargo fmt --all
+	@cargo +nightly fmt --all
 format-check:
 	@echo "Running Cargo fmt..."
-	@cargo fmt --all -- --check
+	@cargo +nightly fmt --all -- --check
 
 .PHONY: build
 build:
