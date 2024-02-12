@@ -32,7 +32,7 @@ jobs:
           toolchain: nightly
           default: true
           profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Cargo check
         run: make check
@@ -52,7 +52,7 @@ jobs:
           toolchain: nightly
           default: true
           profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Cargo test
         run: make test
@@ -71,8 +71,7 @@ jobs:
         with:
           toolchain: nightly
           default: true
-          profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Cargo fmt
         run: make format-check
@@ -91,8 +90,7 @@ jobs:
         with:
           toolchain: nightly
           default: true
-          profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Set Up Cargo Deny
         run: |
@@ -117,7 +115,7 @@ jobs:
           toolchain: nightly
           default: true
           profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Cargo build
         run: make build
@@ -142,7 +140,7 @@ jobs:
           toolchain: nightly
           default: true
           profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -181,7 +179,7 @@ jobs:
           toolchain: nightly
           default: true
           profile: minimal
-          target: wasm32-unknown-unknown
+          target: x86_64-unknown-linux-gnu
 
       - name: Login to Crates.io
         env:
