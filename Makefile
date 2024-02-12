@@ -35,9 +35,11 @@ deny:
 .PHONY: format
 format:
 	@echo "Running Cargo fmt..."
+	@rustup component add rustfmt --toolchain nightly
 	@cargo +nightly fmt --all
 format-check:
 	@echo "Running Cargo fmt..."
+	@rustup component add rustfmt --toolchain nightly
 	@cargo +nightly fmt --all -- --check
 
 .PHONY: build
