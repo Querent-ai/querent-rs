@@ -1,6 +1,6 @@
 use crate::{
 	callbacks::PyEventCallbackInterface,
-	config::Config,
+	config::{Config, Neo4jQueryConfig},
 	cross::{CLRepr, CLReprPython},
 	querent::errors::QuerentError,
 	tokio_runtime,
@@ -20,6 +20,7 @@ pub struct PyAsyncFun {
 	args: Vec<CLRepr>,
 	callback: PyAsyncCallback,
 	config: Option<Config>,
+	query_config: Option<Neo4jQueryConfig>,
 }
 
 pub enum PyAsyncCallback {
@@ -35,8 +36,10 @@ impl std::fmt::Debug for PyAsyncCallback {
 }
 
 impl PyAsyncFun {
-	pub fn split(self) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback, Option<Config>) {
-		(self.fun, self.args, self.callback, self.config)
+	pub fn split(
+		self,
+	) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback, Option<Config>, Option<Neo4jQueryConfig>) {
+		(self.fun, self.args, self.callback, self.config, self.query_config)
 	}
 }
 
@@ -54,11 +57,18 @@ impl PyRuntime {
 		fun: Py<PyFunction>,
 		args: Vec<CLRepr>,
 		config: Option<Config>,
+		query_config: Option<Neo4jQueryConfig>,
 	) -> Result<CLRepr, QuerentError> {
 		let (rx, tx) = oneshot::channel();
 
 		self.sender
-			.send(PyAsyncFun { fun, args, callback: PyAsyncCallback::Channel(rx), config })
+			.send(PyAsyncFun {
+				fun,
+				args,
+				callback: PyAsyncCallback::Channel(rx),
+				config,
+				query_config,
+			})
 			.await
 			.map_err(|err| {
 				QuerentError::internal(format!("Unable to schedule python function call: {}", err))
@@ -68,13 +78,16 @@ impl PyRuntime {
 	}
 
 	fn process_coroutines(task: PyAsyncFun) -> Result<(), QuerentError> {
-		let (fun, args, callback, config) = task.split();
+		let (fun, args, callback, config, query_config) = task.split();
 
 		let task_result = Python::with_gil(move |py| -> PyResult<PyAsyncFunResult> {
 			let mut args_tuple = Vec::with_capacity(args.len());
 
+			// TODO simplify this code
 			if let Some(config) = config {
 				args_tuple.push(config.to_object(py));
+			} else if let Some(query_config) = query_config {
+				args_tuple.push(query_config.to_object(py));
 			}
 
 			for arg in args {
@@ -190,9 +203,10 @@ pub fn call_async(
 	fun: Py<PyFunction>,
 	args: Vec<CLRepr>,
 	config: Option<Config>,
+	query_config: Option<Neo4jQueryConfig>,
 ) -> Result<impl Future<Output = Result<CLRepr, QuerentError>>, QuerentError> {
 	let runtime = py_runtime()?;
-	Ok(runtime.call_async(fun, args, config))
+	Ok(runtime.call_async(fun, args, config, query_config))
 }
 
 pub fn py_runtime_init() -> Result<(), QuerentError> {

@@ -1,7 +1,7 @@
 use crate::{
 	callbacks::{EventCallbackInterface, PyEventCallbackInterface},
 	comm::ChannelHandler,
-	config::Config,
+	config::{Config, Neo4jQueryConfig},
 	cross::{CLRepr, CLReprPython},
 	querent::{py_runtime, PyRuntime, QuerentError},
 	tokio_runtime,
@@ -15,40 +15,31 @@ use tokio::runtime::Runtime;
 /// Represents a workflow.
 #[derive(Debug, Clone)]
 #[pyclass]
-pub struct Workflow {
-	/// Name of the workflow.
+pub struct QueryEngine {
 	pub name: String,
-	/// Unique identifier for the workflow.
 	pub id: String,
-	/// Python module to import for the workflow.
 	pub import: String,
-	/// Attribute of the Python module containing the start function.
 	pub attr: String,
-	/// Optional Python code to execute instead of importing a module.
 	pub code: Option<String>,
-	/// Arguments to pass to the workflow's start function.
 	pub arguments: Vec<CLRepr>,
-	/// Optional configuration for the workflow.
-	pub config: Option<Config>,
+	pub config: Option<Neo4jQueryConfig>,
 }
 
-/// Manages workflows and their execution.
-pub struct WorkflowManager {
-	/// Mutex-protected map of workflows, keyed by their unique identifier.
-	pub workflows: Mutex<HashMap<String, Workflow>>,
+pub struct QueryEngineManager {
+	/// Mutex-protected map of engines for query, keyed by their unique identifier.
+	pub workflows: Mutex<HashMap<String, QueryEngine>>,
 	/// Reference to the Python runtime.
 	pub runtime: &'static PyRuntime,
 }
 
-impl WorkflowManager {
+impl QueryEngineManager {
 	/// Creates a new `WorkflowManager` instance.
 	pub fn new() -> Result<Self, String> {
 		let runtime = py_runtime().map_err(|e| e.to_string())?;
 		Ok(Self { workflows: Mutex::new(HashMap::new()), runtime })
 	}
-
 	/// Adds a workflow to the manager.
-	pub fn add_workflow(&self, workflow: Workflow) -> Result<(), String> {
+	pub fn add_workflow(&self, workflow: QueryEngine) -> Result<(), String> {
 		let mut workflows =
 			self.workflows.lock().map_err(|e| format!("Mutex lock failed: {}", e))?;
 		if workflows.contains_key(&workflow.id) {
@@ -60,7 +51,7 @@ impl WorkflowManager {
 	}
 
 	/// Retrieves a list of all workflows managed by this manager.
-	pub fn get_workflows(&self) -> Vec<Workflow> {
+	pub fn get_workflows(&self) -> Vec<QueryEngine> {
 		let workflows = self.workflows.lock().unwrap();
 		workflows.values().cloned().collect()
 	}
@@ -93,8 +84,8 @@ impl WorkflowManager {
 						let call_future = self.runtime.call_async(
 							querent_py_fun,
 							args,
-							_workflow.config.clone(),
 							None,
+							_workflow.config.clone(),
 						);
 						Ok(call_future)
 					}),
@@ -129,8 +120,8 @@ impl WorkflowManager {
 							let call_future = self.runtime.call_async(
 								querent_py_fun,
 								args,
-								_workflow.config.clone(),
 								None,
+								_workflow.config.clone(),
 							);
 							Ok(call_future)
 						})
@@ -158,7 +149,7 @@ impl WorkflowManager {
 	}
 }
 
-impl Drop for WorkflowManager {
+impl Drop for QueryEngineManager {
 	/// Drops the `WorkflowManager` instance, cleaning up resources.
 	fn drop(&mut self) {
 		log::info!("Dropping WorkflowManager");
