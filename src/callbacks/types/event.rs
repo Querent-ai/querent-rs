@@ -7,6 +7,7 @@ use serde::Serialize;
 pub enum EventType {
 	Graph,
 	Vector,
+	QueryResult,
 	Success,
 	Failure,
 }
@@ -20,6 +21,7 @@ impl<'a> FromPyObject<'a> for EventType {
 			match event_type {
 				"Graph" => Ok(EventType::Graph),
 				"Vector" => Ok(EventType::Vector),
+				"QueryResult" => Ok(EventType::QueryResult),
 				// If the string does not match any known EventType, return an error
 				_ => Err(PyErr::new::<PyTypeError, _>("Invalid event type")),
 			}
