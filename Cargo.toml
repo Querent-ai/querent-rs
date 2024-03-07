@@ -28,7 +28,7 @@ serde_yaml = "0.9.25"
 thiserror = "1.0.39"
 wasm-bindgen = {version = "0.2.63", optional = true}
 zeroize = "1.5.7"
-tokio = { version = "1.0", features = ["full", "rt", "tracing"] }
+tokio = { version = "1.0", features = ["full", "rt", "tracing", "process"] }
 tokio-util = { version = "0.7.10", features=["compat"] }
 pyo3 = { version = "0.20.0", features = ["auto-initialize"] }
 pyo3-asyncio = { version = "0.20.0", features = ["attributes", "tokio-runtime", "testing"] }
