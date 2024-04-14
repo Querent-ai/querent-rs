@@ -24,6 +24,7 @@ fn test_callback_interface() {
 			timestamp: 123.45,
 			payload: "TestPayload".to_string(),
 			file: "TestFile".to_string(),
+			doc_source: "file://folder".to_string(),
 		},
 	);
 }
