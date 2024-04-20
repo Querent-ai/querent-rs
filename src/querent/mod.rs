@@ -12,3 +12,4 @@ pub mod py_runtime;
 pub use py_runtime::*;
 pub mod py_process;
 pub use py_process::*;
+pub mod insights;
