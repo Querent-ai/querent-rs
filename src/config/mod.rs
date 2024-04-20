@@ -60,3 +60,4 @@ pub use config_builder::*;
 /// setting up a connection to a Neo4j database and executing queries.
 pub mod neo4j_query_config;
 pub use neo4j_query_config::Neo4jQueryConfig;
+pub mod insight_config;
