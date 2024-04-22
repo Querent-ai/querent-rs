@@ -92,17 +92,19 @@ impl ToPyObject for PaginatedDiscoveredKnowledgeRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DocumentRequest {
 	pub document_id: String,
-	pub document_type: String,
+	pub document_extension: String,
 	pub document_source: String,
+	pub session_id: Option<String>,
 }
 
 impl<'a> FromPyObject<'a> for DocumentRequest {
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		let document_id = ob.get_item("document_id")?.extract()?;
-		let document_type = ob.get_item("document_type")?.extract()?;
+		let document_extension = ob.get_item("document_extension")?.extract()?;
 		let document_source = ob.get_item("document_source")?.extract()?;
+		let session_id = ob.get_item("session_id")?.extract()?;
 
-		Ok(DocumentRequest { document_id, document_type, document_source })
+		Ok(DocumentRequest { document_id, document_extension, document_source, session_id })
 	}
 }
 
@@ -110,8 +112,9 @@ impl IntoPy<PyObject> for DocumentRequest {
 	fn into_py(self, py: Python) -> PyObject {
 		let document_dict = PyDict::new(py);
 		document_dict.set_item("document_id", &self.document_id).unwrap();
-		document_dict.set_item("document_type", &self.document_type).unwrap();
+		document_dict.set_item("document_extension", &self.document_extension).unwrap();
 		document_dict.set_item("document_source", &self.document_source).unwrap();
+		document_dict.set_item("session_id", &self.session_id).unwrap();
 
 		document_dict.into()
 	}
@@ -121,8 +124,9 @@ impl ToPyObject for DocumentRequest {
 	fn to_object(&self, py: Python) -> PyObject {
 		let document_dict = PyDict::new(py);
 		document_dict.set_item("document_id", &self.document_id).unwrap();
-		document_dict.set_item("document_type", &self.document_type).unwrap();
+		document_dict.set_item("document_extension", &self.document_extension).unwrap();
 		document_dict.set_item("document_source", &self.document_source).unwrap();
+		document_dict.set_item("session_id", &self.session_id).unwrap();
 
 		document_dict.into()
 	}
@@ -132,7 +136,7 @@ impl ToPyObject for DocumentRequest {
 pub struct DocumentResponse {
 	pub document_id: String,
 	pub document_bytes: Vec<u8>,
-	pub document_type: String,
+	pub document_extension: String,
 	pub document_source: String,
 }
 
@@ -140,10 +144,10 @@ impl<'a> FromPyObject<'a> for DocumentResponse {
 	fn extract(ob: &'a PyAny) -> PyResult<Self> {
 		let document_id = ob.get_item("document_id")?.extract()?;
 		let document_bytes = ob.get_item("document_bytes")?.extract()?;
-		let document_type = ob.get_item("document_type")?.extract()?;
+		let document_extension = ob.get_item("document_extension")?.extract()?;
 		let document_source = ob.get_item("document_source")?.extract()?;
 
-		Ok(DocumentResponse { document_id, document_bytes, document_type, document_source })
+		Ok(DocumentResponse { document_id, document_bytes, document_extension, document_source })
 	}
 }
 
@@ -152,7 +156,7 @@ impl IntoPy<PyObject> for DocumentResponse {
 		let document_dict = PyDict::new(py);
 		document_dict.set_item("document_id", &self.document_id).unwrap();
 		document_dict.set_item("document_bytes", &self.document_bytes).unwrap();
-		document_dict.set_item("document_type", &self.document_type).unwrap();
+		document_dict.set_item("document_extension", &self.document_extension).unwrap();
 		document_dict.set_item("document_source", &self.document_source).unwrap();
 
 		document_dict.into()
@@ -164,7 +168,7 @@ impl ToPyObject for DocumentResponse {
 		let document_dict = PyDict::new(py);
 		document_dict.set_item("document_id", &self.document_id).unwrap();
 		document_dict.set_item("document_bytes", &self.document_bytes).unwrap();
-		document_dict.set_item("document_type", &self.document_type).unwrap();
+		document_dict.set_item("document_extension", &self.document_extension).unwrap();
 		document_dict.set_item("document_source", &self.document_source).unwrap();
 
 		document_dict.into()
@@ -190,6 +194,9 @@ pub trait DexInterface {
 		&mut self,
 		documents: Vec<DocumentRequest>,
 	) -> Option<Vec<DocumentResponse>>;
+
+	/// Request all documents given for discovery session
+	fn request_all_documents(&mut self, session_id: String) -> Option<Vec<DocumentResponse>>;
 }
 
 // Define a basic event handler struct
@@ -297,5 +304,15 @@ impl DexInterface for DataTransferLayer {
 		self.document_sender.as_ref()?.send(documents).ok()?;
 
 		self.document_receiver.as_ref()?.recv().ok()
+	}
+
+	fn request_all_documents(&mut self, session_id: String) -> Option<Vec<DocumentResponse>> {
+		let request = vec![DocumentRequest {
+			document_id: "".to_string(),
+			document_extension: "".to_string(),
+			document_source: "".to_string(),
+			session_id: Some(session_id),
+		}];
+		self.request_documents(request)
 	}
 }

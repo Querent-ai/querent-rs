@@ -9,7 +9,9 @@ use crate::querent::insights::dex::dex_handler::{DataTransferLayer, PyDexInterfa
 #[derive(Debug, Clone)]
 #[pyclass]
 pub struct InsightConfig {
-	/// Unique identifier for the insight flow
+	/// A unique identifier for the insight job
+	pub id: String,
+	/// Unique identifier for the insight selected
 	pub insight_id: String,
 	/// The discovery session id for which this insight job should be run
 	pub discovery_session_id: String,
@@ -28,6 +30,8 @@ impl ToPyObject for InsightConfig {
 	/// Converts a InsightConfig to a Python object.
 	fn to_object(&self, py: Python) -> PyObject {
 		let config_dict = PyDict::new(py);
+		config_dict.set_item("id", &self.id).unwrap();
+		config_dict.set_item("insight_id", &self.insight_id).unwrap();
 		config_dict
 			.set_item("discovery_session_id", &self.discovery_session_id)
 			.unwrap();
@@ -45,7 +49,7 @@ impl ToPyObject for InsightConfig {
 			for (key, value) in &self.additional_inputs {
 				additional_input_dict.set_item(key, value).unwrap();
 			}
-			config_dict.set_item("additional_input", additional_input_dict).unwrap();
+			config_dict.set_item("additional_inputs", additional_input_dict).unwrap();
 		}
 		config_dict.to_object(py)
 	}
