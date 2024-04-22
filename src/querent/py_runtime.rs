@@ -1,6 +1,5 @@
 use crate::{
 	callbacks::PyEventCallbackInterface,
-	config::Config,
 	cross::{CLRepr, CLReprPython},
 	querent::errors::QuerentError,
 	tokio_runtime,
@@ -19,7 +18,7 @@ pub struct PyAsyncFun {
 	fun: Py<PyFunction>,
 	args: Vec<CLRepr>,
 	callback: PyAsyncCallback,
-	config: Option<Config>,
+	config: Option<PyObject>,
 }
 
 pub enum PyAsyncCallback {
@@ -35,7 +34,7 @@ impl std::fmt::Debug for PyAsyncCallback {
 }
 
 impl PyAsyncFun {
-	pub fn split(self) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback, Option<Config>) {
+	pub fn split(self) -> (Py<PyFunction>, Vec<CLRepr>, PyAsyncCallback, Option<PyObject>) {
 		(self.fun, self.args, self.callback, self.config)
 	}
 }
@@ -53,7 +52,7 @@ impl PyRuntime {
 		&self,
 		fun: Py<PyFunction>,
 		args: Vec<CLRepr>,
-		config: Option<Config>,
+		config: Option<PyObject>,
 	) -> Result<CLRepr, QuerentError> {
 		let (rx, tx) = oneshot::channel();
 
@@ -75,7 +74,7 @@ impl PyRuntime {
 
 			// TODO simplify this code
 			if let Some(config) = config {
-				args_tuple.push(config.to_object(py));
+				args_tuple.push(config);
 			}
 
 			for arg in args {
@@ -190,7 +189,7 @@ pub fn py_runtime() -> Result<&'static PyRuntime, QuerentError> {
 pub fn call_async(
 	fun: Py<PyFunction>,
 	args: Vec<CLRepr>,
-	config: Option<Config>,
+	config: Option<PyObject>,
 ) -> Result<impl Future<Output = Result<CLRepr, QuerentError>>, QuerentError> {
 	let runtime = py_runtime()?;
 	Ok(runtime.call_async(fun, args, config))

@@ -8,7 +8,10 @@ use crate::{
 };
 use futures::TryFutureExt;
 use log;
-use pyo3::{prelude::*, types::PyFunction};
+use pyo3::{
+	prelude::*,
+	types::{PyDict, PyFunction},
+};
 use std::{collections::HashMap, sync::Mutex};
 use tokio::runtime::Runtime;
 
@@ -90,8 +93,12 @@ impl WorkflowManager {
 							QuerentError::internal(e.to_string())
 						})?;
 
+						let mut config_pyobject: Option<PyObject> = None;
+						if let Some(config) = &_workflow.config {
+							config_pyobject = Some(config.to_object(py));
+						}
 						let call_future =
-							self.runtime.call_async(querent_py_fun, args, _workflow.config.clone());
+							self.runtime.call_async(querent_py_fun, args, config_pyobject);
 						Ok(call_future)
 					}),
 					Some(code) => {
@@ -122,11 +129,12 @@ impl WorkflowManager {
 									QuerentError::internal(e.to_string())
 								})?;
 
-							let call_future = self.runtime.call_async(
-								querent_py_fun,
-								args,
-								_workflow.config.clone(),
-							);
+							let mut config_pyobject: Option<PyObject> = None;
+							if let Some(config) = &_workflow.config {
+								config_pyobject = Some(config.to_object(py));
+							}
+							let call_future =
+								self.runtime.call_async(querent_py_fun, args, config_pyobject);
 							Ok(call_future)
 						})
 					},
