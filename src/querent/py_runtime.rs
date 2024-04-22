@@ -1,6 +1,6 @@
 use crate::{
 	callbacks::PyEventCallbackInterface,
-	config::{Config, Neo4jQueryConfig},
+	config::Config,
 	cross::{CLRepr, CLReprPython},
 	querent::errors::QuerentError,
 	tokio_runtime,
