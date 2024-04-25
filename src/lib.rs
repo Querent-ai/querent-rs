@@ -9,11 +9,11 @@
 use once_cell::sync::OnceCell;
 use querent::errors::QuerentError;
 use tokio::runtime::{Builder, Runtime};
-
 pub mod callbacks;
 pub mod comm;
 pub mod config;
 pub mod cross;
+pub mod python;
 pub mod querent;
 #[cfg(test)]
 mod tests;
