@@ -25,6 +25,7 @@ fn test_callback_interface() {
 			payload: "TestPayload".to_string(),
 			file: "TestFile".to_string(),
 			doc_source: "file://folder".to_string(),
+			image_id: "123456".to_string(),
 		},
 	);
 }
