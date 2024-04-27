@@ -6,7 +6,7 @@ homepage = "https://querent.xyz"
 license = "Apache-2.0"
 publish = true
 repository = "https://github.com/querent-ai/querent-rs"
-version = "3.0.4"
+version = "3.0.5"
 
 [lib]
 name = "querent_synapse"
