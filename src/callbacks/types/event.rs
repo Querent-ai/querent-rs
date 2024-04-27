@@ -54,6 +54,6 @@ impl<'a> FromPyObject<'a> for EventState {
 		let doc_source = ob.get_item("doc_source")?.extract()?;
 		let image_id = ob.get_item("image_id")?.extract()?;
 		// Create and return an EventState instance
-		Ok(EventState { event_type, timestamp, payload, file, doc_source })
+		Ok(EventState { event_type, timestamp, payload, file, doc_source, image_id })
 	}
 }
