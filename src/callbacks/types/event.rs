@@ -40,7 +40,7 @@ pub struct EventState {
 	pub payload: String,
 	pub file: String,
 	pub doc_source: String,
-	pub image_id: String,
+	pub image_id: Option<String>,
 }
 
 // Implement conversion from Python object to EventState
