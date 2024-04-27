@@ -369,7 +369,8 @@ async def print_querent(config, text: str):
             "timestamp": 123.45,  # Replace with the actual timestamp
             "payload": "🚀🚀",  # Replace with the actual payload data
 			"file": "test_file",  # Replace with the actual file name
-			"doc_source": "test_doc_source"  # Replace with the actual doc source
+			"doc_source": "test_doc_source",  # Replace with the actual doc source
+            "image_id": "123456"  #Replace with actual image id
         }
         config['workflow']['event_handler'].handle_event(event_type, event_data)
 "#;
