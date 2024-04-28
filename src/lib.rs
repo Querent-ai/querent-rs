@@ -13,7 +13,6 @@ pub mod callbacks;
 pub mod comm;
 pub mod config;
 pub mod cross;
-pub mod python;
 pub mod querent;
 #[cfg(test)]
 mod tests;
