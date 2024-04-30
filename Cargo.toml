@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "querent-synapse",
+    "querent-pyembedder",
 ]
 
 [profile.release]
