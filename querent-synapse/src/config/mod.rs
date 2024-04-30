@@ -53,10 +53,3 @@ pub mod config_builder;
 
 /// Re-export of the `ConfigBuilder` struct from the `config_builder` module.
 pub use config_builder::*;
-
-/// Module containing the configuration for a Neo4j query.
-///
-/// This module provides a configuration structure `Neo4jQueryConfig` for
-/// setting up a connection to a Neo4j database and executing queries.
-pub mod neo4j_query_config;
-pub use neo4j_query_config::Neo4jQueryConfig;

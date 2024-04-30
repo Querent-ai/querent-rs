@@ -1,68 +1,11 @@
-[package]
-name = "querent-synapse"
-description = "A rust bridge capable of handling and executing querent workflows and be able to respond to incoming events via callbacks. Acting like a synapse between querent and the outside world."
-edition = "2021"
-homepage = "https://querent.xyz"
-license = "Apache-2.0"
-publish = true
-repository = "https://github.com/querent-ai/querent-rs"
-version = "3.0.5"
+[workspace]
+resolver = "2"
+members = [
+    "querent-synapse",
+]
 
-[lib]
-name = "querent_synapse"
-path = "src/lib.rs"
-doctest = false
+[profile.release]
+opt-level = 3
 
-[dependencies]
-anyhow = "1.0.69"
-apache-avro = { version = "0.16.0", features = ["snappy"] }
-dryoc = "0.5.1"
-lazy_static = "1.4.0"
-log = { version = "^0.4.17", features = ["std", "max_level_debug", "release_max_level_debug"] }
-miniz_oxide = "0.7.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_bytes = "0.11.9"
-serde_with = "3.3.0"
-serde_json = "1.0.96"
-serde_yaml = "0.9.25"
-thiserror = "1.0.39"
-wasm-bindgen = {version = "0.2.63", optional = true}
-zeroize = "1.5.7"
-tokio = { version = "1.0", features = ["full", "rt", "tracing", "process"] }
-tokio-util = { version = "0.7.10", features=["compat"] }
-pyo3 = { version = "0.20.0", features = ["auto-initialize"] }
-pyo3-asyncio = { version = "0.20.0", features = ["attributes", "tokio-runtime", "testing"] }
-futures = "0.3.29"
-base64 = "0.22.0"
-once_cell = "1.18.0"
-minijinja = { version = "1.0.9", features = ["json", "loader"] }
-tracing = "0.1.37"
-tracing-opentelemetry = "0.23.0"
-crossbeam-channel = "0.5.10"
-tracing-subscriber = { version = "0.3.16", features = [
-  "env-filter",
-  "std",
-  "time",
-] }
-utoipa = "4.1.0"
-
-[dev-dependencies]
-pretty_assertions = "1.3.0"
-rand = "0.8.5"
-hex = "0.4.3"
-base64 = "0.22.0"
-ntest = "0.9.0"
-log = "0.4.17"
-env_logger = "^0.11.3"
-ctor = "^0.2.2"
-
-
-[[test]]
-name = "test_basic"
-path = "pytests/test_basic.rs"
-harness = false
-
-[[test]]
-name = "test_workflow_manager"
-path = "pytests/test_workflow_manager.rs"
-harness = false
+# Required for MacOS (Python), waste for Linux
+strip = false

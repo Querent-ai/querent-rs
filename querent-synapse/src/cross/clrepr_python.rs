@@ -5,7 +5,7 @@ use pyo3::{
 		PyBool, PyComplex, PyDate, PyDict, PyFloat, PyFrame, PyFunction, PyInt, PyList, PySequence,
 		PySet, PyString, PyTraceback, PyTuple,
 	},
-	Py, PyAny, PyErr, PyObject, Python, ToPyObject,
+	AsPyPointer, Py, PyAny, PyErr, PyObject, Python, ToPyObject,
 };
 
 #[derive(Debug, Clone)]
