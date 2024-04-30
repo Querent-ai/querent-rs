@@ -42,10 +42,14 @@ format-check:
 	@rustup component add rustfmt --toolchain nightly
 	@cargo +nightly fmt --all -- --check
 
+.PHONY: pyembed
+pyembed:
+	@echo "Running PyO3 embed..."
+	@cargo run --bin querent-pyembedder --release
 .PHONY: build
 build:
 	@echo "Running Cargo build..."
-	@cargo build --release --all-features
+	@cargo build --release --all-features -p querent-synapse
 
 .PHONY: doc
 doc:
