@@ -46,8 +46,9 @@ format-check:
 pyembed:
 	@echo "Running PyO3 embed..."
 	@cargo run --bin querent-pyembedder --release
+
 .PHONY: build
-build:
+build: pyembed
 	@echo "Running Cargo build..."
 	@cargo build --release --all-features -p querent-synapse
 
