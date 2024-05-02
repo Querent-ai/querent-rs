@@ -79,7 +79,7 @@ pub fn base_python_interpreter() -> Result<(), Error> {
 	let interpreter = MainPythonInterpreter::new(config)?;
 	// Enable modern shell
 	interpreter.with_gil(|py| {
-		py.import("readline").ok();
+		py.run("print('Querent Embedded Python is Active: 🐍')", None, None).unwrap();
 	});
 	Ok(())
 }
