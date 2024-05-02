@@ -9,6 +9,7 @@
 use anyhow::Error;
 use once_cell::sync::OnceCell;
 use pyembed::MainPythonInterpreter;
+use pyo3::prelude::*;
 use querent::{errors::QuerentError, Settings};
 use tokio::runtime::{Builder, Runtime};
 use tracing::info;
@@ -81,6 +82,43 @@ pub fn base_python_interpreter() -> Result<(), Error> {
 		py.import("readline").ok();
 	});
 	Ok(())
+}
+
+/// Install pip packages
+pub fn pip_install(requirements: Vec<String>) -> Result<(), Error> {
+	let folder = Settings::get_folder()?;
+	let config = querent::py_module::pyoxidizer_config(folder.clone())?;
+
+	// Install
+	let interpreter = MainPythonInterpreter::new(config)?;
+	interpreter.with_gil(|py| -> Result<(), Error> {
+		let f = || -> PyResult<()> {
+			// Package list
+			let mut params: Vec<String> =
+				vec!["install".into(), "pip".into(), "setuptools".into(), "wheel".into()];
+			params.extend(requirements);
+
+			// Install
+			py.import("pip")?.call_method1("main", (params,))?;
+			Ok(())
+		};
+		convert_result(f(), py)
+	})?;
+	Ok(())
+}
+
+/// Convert py result to normal result
+pub fn convert_result<T>(result: PyResult<T>, py: Python<'_>) -> Result<T, Error> {
+	match result {
+		Ok(r) => Ok(r),
+		Err(e) => {
+			let mut error = format!("{e}");
+			if let Some(traceback) = e.traceback(py).map(|e| e.format().ok()).flatten() {
+				error = format!("{error}\n{traceback}");
+			}
+			Err(anyhow::anyhow!("{}", error))
+		},
+	}
 }
 
 pub mod busy_detector {
