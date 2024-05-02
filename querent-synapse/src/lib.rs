@@ -64,11 +64,11 @@ pub fn setup() -> Result<(), Error> {
 	Ok(())
 }
 
-pub fn base_python_interpreter(platform: &str) -> Result<(), Error> {
+pub fn base_python_interpreter() -> Result<(), Error> {
+	// Setup python
+	setup()?;
 	let folder = Settings::get_folder()?;
-	let mut config = querent::py_module::pyoxidizer_config(
-		folder.join("querent_plugins").join(platform).join(".python"),
-	)?;
+	let mut config = querent::py_module::pyoxidizer_config(folder.clone())?;
 	config
 		.interpreter_config
 		.module_search_paths
@@ -80,7 +80,7 @@ pub fn base_python_interpreter(platform: &str) -> Result<(), Error> {
 	interpreter.with_gil(|py| {
 		py.import("readline").ok();
 	});
-	std::process::exit(interpreter.run());
+	Ok(())
 }
 
 pub mod busy_detector {

@@ -16,31 +16,6 @@ pub struct Settings {
 }
 
 impl Settings {
-	/// Load settings from file
-	pub fn load() -> Result<Settings, Error> {
-		let path = Settings::get_path()?;
-		let settings: Settings = serde_json::from_reader(BufReader::new(File::open(&path)?))?;
-
-		// v1.0 are not compatible with 1.1, create backup
-		if settings.version.unwrap_or(1) == 1 {
-			let new_path = format!("{}-1.0.bak", &path);
-			std::fs::copy(&path, &new_path)?;
-			info!("Backup of settings created: {}", new_path);
-			std::fs::remove_file(&path)?;
-			return Settings::load();
-		}
-
-		Ok(settings)
-	}
-
-	/// Save settings to file
-	pub fn save(&self) -> Result<(), Error> {
-		let path = Settings::get_path()?;
-		let mut file = BufWriter::new(File::create(path)?);
-		file.write_all(serde_json::to_string_pretty(self)?.as_bytes())?;
-		Ok(())
-	}
-
 	/// Get app data folder
 	pub fn get_folder() -> Result<PathBuf, Error> {
 		// Android data dir override
@@ -55,12 +30,6 @@ impl Settings {
 			std::fs::create_dir_all(root.preference_dir())?;
 		}
 		Ok(root.preference_dir().to_owned())
-	}
-
-	/// Get settings path
-	fn get_path() -> Result<String, Error> {
-		let path = Settings::get_folder()?.join("settings.json");
-		Ok(path.to_str().ok_or(anyhow!("Error converting path to string!"))?.to_string())
 	}
 }
 

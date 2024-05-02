@@ -1,6 +1,9 @@
-use crate::callbacks::{
-	types::{EventState, EventType},
-	EventCallbackInterface,
+use crate::{
+	base_python_interpreter,
+	callbacks::{
+		types::{EventState, EventType},
+		EventCallbackInterface,
+	},
 };
 
 struct MockCallback;
@@ -28,4 +31,10 @@ fn test_callback_interface() {
 			image_id: Some("123456".to_string()),
 		},
 	);
+}
+
+#[test]
+fn test_python_setup() {
+	let res = base_python_interpreter();
+	assert!(res.is_ok());
 }
