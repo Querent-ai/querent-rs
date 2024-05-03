@@ -202,8 +202,6 @@ pub fn py_runtime_init() -> Result<(), QuerentError> {
 
 	let runtime = tokio_runtime()?;
 
-	pyo3::prepare_freethreaded_python();
-
 	pyo3_asyncio::tokio::init_with_runtime(runtime)
 		.map_err(|_| QuerentError::internal("Unable to initialize Python runtime".to_string()))?;
 	if PY_RUNTIME.set(PyRuntime::new()).is_err() {

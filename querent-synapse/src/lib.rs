@@ -6,13 +6,15 @@
 //! # Example
 //! use qurent_rs::Querent;
 
-use anyhow::Error;
+use std::sync::Once;
+
+use anyhow::{anyhow, Error};
 use once_cell::sync::OnceCell;
 use pyembed::MainPythonInterpreter;
 use pyo3::prelude::*;
 use querent::{errors::QuerentError, Settings};
 use tokio::runtime::{Builder, Runtime};
-use tracing::info;
+use tracing::{error, info};
 
 pub mod callbacks;
 pub mod comm;
@@ -27,7 +29,8 @@ pub mod util;
 const PYTHON_STDLIB: &[u8] = include_bytes!("../pyembedded/stdlib.zip");
 const PYTHON_VERSION: &'static str = include_str!("../pyembedded/VERSION");
 const PIP_PYZ: &[u8] = include_bytes!("../pyembedded/pip.pyz");
-
+static mut INTERPRETER: Option<MainPythonInterpreter<'static, 'static>> = None;
+static INIT_INTERPRETER: Once = Once::new();
 /// Windows specific libraries that have to be unzipped
 #[cfg(target_os = "windows")]
 const PYTHON_LIBS: &[u8] = include_bytes!("../pyembedded/lib.zip");
@@ -67,30 +70,48 @@ pub fn setup() -> Result<(), Error> {
 
 pub fn base_python_interpreter() -> Result<(), Error> {
 	// Setup python
-	setup()?;
-	let folder = Settings::get_folder()?;
-	let mut config = querent::py_module::pyoxidizer_config(folder.clone())?;
-	config
-		.interpreter_config
-		.module_search_paths
-		.as_mut()
-		.unwrap()
-		.push(folder.join("pip.pyz"));
-	let interpreter = MainPythonInterpreter::new(config)?;
-	// Enable modern shell
-	interpreter.with_gil(|py| {
-		py.run("print('Querent Embedded Python is Active: 🐍')", None, None).unwrap();
+	INIT_INTERPRETER.call_once(|| {
+		if let Err(err) = setup() {
+			error!("Error setting up Python: {:?}", err);
+			return;
+		}
+
+		// comes from the default_python_config.rs file above
+		let folder = Settings::get_folder().expect("Error getting folder");
+		let mut config = querent::py_module::pyoxidizer_config(folder.clone())
+			.expect("Error getting pyoxidizer config");
+		config
+			.interpreter_config
+			.module_search_paths
+			.as_mut()
+			.unwrap()
+			.push(folder.join("pip.pyz"));
+
+		match MainPythonInterpreter::new(config) {
+			Ok(interpreter) => {
+				unsafe { INTERPRETER = Some(interpreter) };
+			},
+			Err(err) => {
+				error!("Error initializing Python interpreter: {:?}", err);
+				panic!("Error initializing Python interpreter: {:?}", err);
+			},
+		}
 	});
+
 	Ok(())
+}
+
+pub fn python_interpreter() -> Result<&'static MainPythonInterpreter<'static, 'static>, Error> {
+	base_python_interpreter().map_err(|e| anyhow!("{}", e))?;
+	unsafe { INTERPRETER.as_ref().ok_or(anyhow!("Python interpreter not initialized")) }
 }
 
 /// Install pip packages
 pub fn pip_install(requirements: Vec<String>) -> Result<(), Error> {
-	let folder = Settings::get_folder()?;
-	let config = querent::py_module::pyoxidizer_config(folder.clone())?;
+	base_python_interpreter()?;
+	let interpreter =
+		unsafe { INTERPRETER.as_ref().ok_or(anyhow!("Python interpreter not initialized"))? };
 
-	// Install
-	let interpreter = MainPythonInterpreter::new(config)?;
 	interpreter.with_gil(|py| -> Result<(), Error> {
 		let f = || -> PyResult<()> {
 			// Package list
@@ -135,7 +156,9 @@ pub mod busy_detector {
 	const ALLOWED_DELAY_MICROS: u64 = 5000;
 	const DEBUG_SUPPRESSION_MICROS: u64 = 30_000_000;
 
-	thread_local!(static LAST_UNPARK_TIMESTAMP: AtomicU64 = AtomicU64::new(0));
+	thread_local! {
+		static LAST_UNPARK_TIMESTAMP: AtomicU64 = AtomicU64::new(0);
+	}
 	static NEXT_DEBUG_TIMESTAMP: AtomicU64 = AtomicU64::new(0);
 	static SUPPRESSED_DEBUG_COUNT: AtomicU64 = AtomicU64::new(0);
 
@@ -147,7 +170,7 @@ pub mod busy_detector {
 		LAST_UNPARK_TIMESTAMP.with(|time| {
 			let now = Instant::now().checked_duration_since(*TIME_REF).unwrap_or_default();
 			time.store(now.as_micros() as u64, Ordering::Relaxed);
-		})
+		});
 	}
 
 	pub fn thread_park() {
@@ -162,7 +185,7 @@ pub mod busy_detector {
 			if delta > ALLOWED_DELAY_MICROS {
 				emit_debug(delta, now);
 			}
-		})
+		});
 	}
 
 	fn emit_debug(delta: u64, now: u64) {
@@ -176,19 +199,18 @@ pub mod busy_detector {
 			})
 			.is_err()
 		{
-			// a debug was emited recently, don't emit log for this one
 			SUPPRESSED_DEBUG_COUNT.fetch_add(1, Ordering::Relaxed);
 			return;
 		}
 
 		let suppressed = SUPPRESSED_DEBUG_COUNT.swap(0, Ordering::Relaxed);
 		if suppressed == 0 {
-			debug!("thread wasn't parked for {delta}µs, is the runtime too busy?");
+			debug!("Thread wasn't parked for {}µs, is the runtime too busy?", delta);
 		} else {
 			debug!(
-				"thread wasn't parked for {delta}µs, is the runtime too busy? ({suppressed} \
-                 similar messages suppressed)"
-			);
+                "Thread wasn't parked for {}µs, is the runtime too busy? ({} similar messages suppressed)",
+                delta, suppressed
+            );
 		}
 	}
 }

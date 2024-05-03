@@ -4,6 +4,7 @@ use crate::{
 		types::{EventState, EventType},
 		EventCallbackInterface,
 	},
+	python_interpreter, INTERPRETER,
 };
 
 struct MockCallback;
@@ -37,4 +38,16 @@ fn test_callback_interface() {
 fn test_python_setup() {
 	let res = base_python_interpreter();
 	assert!(res.is_ok());
+}
+
+// python_interpreter
+#[test]
+fn test_python_interpreter() {
+	let res = python_interpreter();
+	assert!(res.is_ok());
+
+	// Check if the Python interpreter is initialized
+	unsafe {
+		assert!(INTERPRETER.is_some());
+	}
 }
