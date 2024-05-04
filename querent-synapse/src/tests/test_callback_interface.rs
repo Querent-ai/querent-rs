@@ -51,3 +51,15 @@ fn test_python_interpreter() {
 		assert!(INTERPRETER.is_some());
 	}
 }
+
+#[test]
+fn test_simple_python_interpreter() {
+	let res = python_interpreter();
+	assert!(res.is_ok());
+	let interpreter =
+		unsafe { INTERPRETER.as_ref().expect("Python interpreter NOT initialized!!!") };
+	// `py` is a `pyo3::Python` instance.
+	interpreter.with_gil(|py| {
+		py.run("print('hello, Querent')", None, None).unwrap();
+	});
+}

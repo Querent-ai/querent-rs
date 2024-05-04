@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use pyo3::exceptions::PyTypeError;
+use pyo3::{exceptions::PyTypeError, Python};
 use querent_synapse::{
 	callbacks::{interface::EventHandler, EventType},
 	comm::ChannelHandler,
@@ -9,9 +9,20 @@ use querent_synapse::{
 	querent::workflow::{Workflow, WorkflowManager},
 };
 
-#[pyo3_asyncio::tokio::main]
-async fn main() -> pyo3::PyResult<()> {
-	pyo3_asyncio::testing::main().await
+fn main() -> pyo3::PyResult<()> {
+	pyo3::prepare_freethreaded_python();
+
+	Python::with_gil(|py| {
+		let mut builder = tokio::runtime::Builder::new_current_thread();
+		builder.enable_all();
+
+		pyo3_asyncio::tokio::init(builder);
+		std::thread::spawn(move || {
+			pyo3_asyncio::tokio::get_runtime().block_on(futures::future::pending::<()>());
+		});
+
+		pyo3_asyncio::tokio::run(py, pyo3_asyncio::testing::main())
+	})
 }
 
 #[pyo3_asyncio::tokio::test]

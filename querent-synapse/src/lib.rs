@@ -89,6 +89,7 @@ pub fn base_python_interpreter() -> Result<(), Error> {
 
 		match MainPythonInterpreter::new(config) {
 			Ok(interpreter) => {
+				info!("Embedded Python Interpreter Init  🐍🐍🐍");
 				unsafe { INTERPRETER = Some(interpreter) };
 			},
 			Err(err) => {
