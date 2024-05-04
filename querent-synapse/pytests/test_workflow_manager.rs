@@ -6,12 +6,13 @@ use querent_synapse::{
 	comm::ChannelHandler,
 	config::{config::WorkflowConfig, Config},
 	cross::{CLRepr, StringType},
+	python_interpreter,
 	querent::workflow::{Workflow, WorkflowManager},
 };
 
 fn main() -> pyo3::PyResult<()> {
-	pyo3::prepare_freethreaded_python();
-
+	let res = python_interpreter();
+	assert!(res.is_ok());
 	Python::with_gil(|py| {
 		let mut builder = tokio::runtime::Builder::new_current_thread();
 		builder.enable_all();
